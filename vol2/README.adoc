@@ -1,0 +1,3 @@
+= Задача об умном муравье
+
+https://github.com/BasePractice/c_fsm/blob/master/clever_ant/ep93.pdf[Постановка задачи]
