@@ -1,37 +1,37 @@
-package ru.pastor.mifi.examples.v1;
+package ru.mifi.practice.vol1;
 
 import java.util.Optional;
 
 public abstract sealed class Human {
     protected final Women mother;
     protected final Men father;
-    protected final Object yChromosome;
+    protected final Object xyChromosome;
     protected final Object mitochondria;
     private int ageMonth;
 
     protected Human(Women mother, Men father,
-                    Object yChromosome, Object mitochondria, int ageMonth) {
+                    Object xyChromosome, Object mitochondria, int ageMonth) {
         this.mother = mother;
         this.father = father;
-        this.yChromosome = yChromosome;
+        this.xyChromosome = xyChromosome;
         this.mitochondria = mitochondria;
         this.ageMonth = ageMonth;
     }
 
     protected Human(Women mother, Men father, int ageMonth) {
-        this(mother, father, father.yChromosome, mother.mitochondria, ageMonth);
+        this(mother, father, father.xyChromosome, mother.mitochondria, ageMonth);
     }
 
-    protected Human(Women mother, Object yChromosome, int ageMonth) {
-        this(mother, null, yChromosome, mother.mitochondria, ageMonth);
+    protected Human(Women mother, Object xyChromosome, int ageMonth) {
+        this(mother, null, xyChromosome, mother.mitochondria, ageMonth);
     }
 
     protected Human(Men father, Object mitochondria, int ageMonth) {
-        this(null, father, father.yChromosome, mitochondria, ageMonth);
+        this(null, father, father.xyChromosome, mitochondria, ageMonth);
     }
 
-    protected Human(Object yChromosome, Object mitochondria, int ageMonth) {
-        this(null, null, yChromosome, mitochondria, ageMonth);
+    protected Human(Object xyChromosome, Object mitochondria, int ageMonth) {
+        this(null, null, xyChromosome, mitochondria, ageMonth);
     }
 
     public static Women women() {
@@ -42,11 +42,11 @@ public abstract sealed class Human {
         return new Men(new Object(), new Object(), 20 * 12);
     }
 
-    public int ageYear() {
+    public final int ageYear() {
         return ageMonth / 12;
     }
 
-    public void tick() {
+    public final void tick() {
         ++ageMonth;
     }
 
@@ -74,8 +74,8 @@ public abstract sealed class Human {
             super(mother, father, age);
         }
 
-        private Men(Object yChromosome, Object mitochondria, int age) {
-            super(yChromosome, mitochondria, age);
+        private Men(Object xyChromosome, Object mitochondria, int age) {
+            super(xyChromosome, mitochondria, age);
         }
 
         @Override
@@ -101,8 +101,8 @@ public abstract sealed class Human {
             super(mother, father, age);
         }
 
-        private Women(Object yChromosome, Object mitochondria, int age) {
-            super(yChromosome, mitochondria, age);
+        private Women(Object xyChromosome, Object mitochondria, int age) {
+            super(xyChromosome, mitochondria, age);
         }
 
         @Override

@@ -1,4 +1,4 @@
-package ru.pastor.mifi.examples.v1;
+package ru.mifi.practice.vol1;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,9 +15,12 @@ public final class Earth {
     private void start() {
         random.setSeed(System.currentTimeMillis());
         List<Relation> relations = new ArrayList<>();
+        int generation = 0;
         do {
-            circle(1500, relations);
+            circle(2500, relations);
+            ++generation;
         } while (relations.isEmpty());
+        System.out.println("Generation: " + generation);
         for (Relation relation : relations) {
             System.out.println(relation);
         }
@@ -56,6 +59,7 @@ public final class Earth {
         }
     }
 
+    @SuppressWarnings("PMD.ForLoopCanBeForeach")
     private static void deleteDied(List<Relation> relations, List<Human> humans) {
         for (int i = 0; i < relations.size(); i++) {
             Relation relation = relations.get(i);
@@ -67,6 +71,7 @@ public final class Earth {
         }
     }
 
+    @SuppressWarnings("PMD.ForLoopCanBeForeach")
     private static void deleteDied(List<Human> humans) {
         for (int i = 0; i < humans.size(); i++) {
             Human human = humans.get(i);

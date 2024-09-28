@@ -1,4 +1,4 @@
-package ru.pastor.mifi.examples.v1;
+package ru.mifi.practice.vol1;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,9 +16,11 @@ public final class Relation {
     }
 
     public static Optional<Relation> of(Human h1, Human h2, List<Human> humans) {
-        if (h1 instanceof Human.Women w && h2 instanceof Human.Men m && h1.isReproductive() && h2.isReproductive()) {
+        if (h1 instanceof Human.Women w
+                && h2 instanceof Human.Men m && h1.isReproductive() && h2.isReproductive()) {
             return Optional.of(new Relation(humans, w, m));
-        } else if (h1 instanceof Human.Men m && h2 instanceof Human.Women w && h1.isReproductive() && h2.isReproductive()) {
+        } else if (h1 instanceof Human.Men m
+                && h2 instanceof Human.Women w && h1.isReproductive() && h2.isReproductive()) {
             return Optional.of(new Relation(humans, w, m));
         }
         return Optional.empty();
