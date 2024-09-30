@@ -8,7 +8,7 @@ public interface Ant {
 
     enum Step {
         /**
-         * Move forward and eat(if eat exists)
+         * Move forward and eat(if food exists)
          * Движение вперед (относительно текущего положения и направления взгляда)
          * Если движение осуществляется на клетку которая является едой, еда съедается
          */
