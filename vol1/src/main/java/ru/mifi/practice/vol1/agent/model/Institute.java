@@ -36,6 +36,10 @@ public final class Institute {
         environment.tick();
     }
 
+    enum Messages implements Transport.Replay {
+        NOISE, WAT
+    }
+
     private record Human(String name, Class<? extends Agent> klass) implements Agent.Factory {
         public Agent create(Transport transport) {
             try {
@@ -58,7 +62,23 @@ public final class Institute {
 
         @Override
         public void onEvent(Event event) {
-            throw new UnsupportedOperationException();
+            if (event instanceof Event.EventMessage eventMessage
+                && eventMessage.message() instanceof Messages message
+                && eventMessage.source() != this) {
+                switch (message) {
+                    case NOISE: {
+                        transport.send(Messages.WAT);
+                        break;
+                    }
+                    case WAT: {
+                        //Skip
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
         }
 
         @Override
@@ -71,12 +91,31 @@ public final class Institute {
 
         @Override
         public Optional<Transport.Replay> call(Transport.Message message) {
+            if (message instanceof Messages msg) {
+                return Optional.empty();
+            }
             return Optional.empty();
         }
 
         @Override
         public void onEvent(Event event) {
-            throw new UnsupportedOperationException();
+            if (event instanceof Event.EventMessage eventMessage
+                && eventMessage.message() instanceof Messages message
+                && eventMessage.source() != this) {
+                switch (message) {
+                    case NOISE: {
+                        //Skip
+                        break;
+                    }
+                    case WAT: {
+                        //TODO:
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
         }
 
         @Override
