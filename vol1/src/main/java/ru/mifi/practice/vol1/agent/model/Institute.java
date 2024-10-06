@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Institute implements Agent.Iterator {
     private final Agent[] agents = new Agent[]{
-            new Lector(), new Student("Саша"), new Student("Маша"), new Student("Наташа")
+        new Lector(), new Student("Саша"), new Student("Маша"), new Student("Наташа")
     };
     private final AtomicInteger agentIndex = new AtomicInteger(0);
     private final Environment environment;
@@ -46,12 +46,12 @@ public final class Institute implements Agent.Iterator {
 
         @Override
         public void onEvent(Event event) {
-
+            throw new UnsupportedOperationException();
         }
 
         @Override
         public void tick(Environment.Snapshot snapshot) {
-
+            throw new UnsupportedOperationException();
         }
     }
 
@@ -64,12 +64,12 @@ public final class Institute implements Agent.Iterator {
 
         @Override
         public void onEvent(Event event) {
-
+            throw new UnsupportedOperationException();
         }
 
         @Override
         public void tick(Environment.Snapshot snapshot) {
-
+            throw new UnsupportedOperationException();
         }
     }
 }

@@ -26,7 +26,7 @@ public interface Transport {
             @Override
             public Transport create(Environment environment) {
                 return (target, message) ->
-                        environment.receive(target, Default.this, message);
+                        environment.receive(target, this, message);
             }
         }
     }

@@ -85,7 +85,7 @@ public interface Environment extends Using {
         public Optional<Replay> receive(Object target, Object source, Message message) {
             if (target == this || target == null) {
                 listeners.forEach(listener -> listener.onEvent(
-                        new EventMessage(message, Default.this, source)));
+                        new EventMessage(message, this, source)));
             }
             Agent agent = agents.get(target);
             if (agent != null) {
