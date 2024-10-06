@@ -7,7 +7,7 @@ public interface Transport {
     Optional<Replay> send(Object target, Message message);
 
     default Optional<Replay> send(Message message) {
-        return send(this, message);
+        return send(null, message);
     }
 
     interface Message {

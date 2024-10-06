@@ -11,13 +11,9 @@ import static ru.mifi.practice.vol1.agent.Event.Listener;
 import static ru.mifi.practice.vol1.agent.Transport.Message;
 import static ru.mifi.practice.vol1.agent.Transport.Replay;
 
-public interface Environment extends Using {
+public interface Environment extends Using, Registrar {
 
     Snapshot snapshot();
-
-    void register(Agent.Factory factory);
-
-    void register(Agent.Iterator iterator);
 
     void subscribe(Listener listener);
 
@@ -63,7 +59,11 @@ public interface Environment extends Using {
         }
 
         private void register(Agent agent) {
-            agents.put(agent.id(), agent);
+            Object id = agent.id();
+            if (agents.containsKey(id)) {
+                throw new IllegalArgumentException("Agent " + id + " is already registered");
+            }
+            agents.put(id, agent);
             subscribe(agent);
         }
 
@@ -85,7 +85,7 @@ public interface Environment extends Using {
         public Optional<Replay> receive(Object target, Object source, Message message) {
             if (target == this || target == null) {
                 listeners.forEach(listener -> listener.onEvent(
-                        new EventMessage(message, this, source)));
+                    new EventMessage(message, this, source)));
             }
             Agent agent = agents.get(target);
             if (agent != null) {

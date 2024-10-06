@@ -30,6 +30,25 @@ public final class Institute {
                 return Optional.of(humans[index++].create(transport));
             }
         });
+        this.environment.subscribe(new Event.Listener() {
+            @Override
+            public void onEvent(Event event) {
+                if (event instanceof Event.EventMessage eventMessage
+                    && eventMessage.message() instanceof Messages message
+                    && eventMessage.source() != this && message == Messages.SEND_FLY) {
+                    environment.register(new Agent.Factory() {
+                        private int flyCounter = 0;
+
+                        @Override
+                        public Agent create(Transport transport) {
+                            return new Fly(String.format("fly_%d", ++flyCounter),
+                                eventMessage.source(), transport);
+                        }
+                    });
+                }
+            }
+        });
+        this.environment.subscribe(System.out::println);
     }
 
     public void tick() {
@@ -37,7 +56,7 @@ public final class Institute {
     }
 
     enum Messages implements Transport.Replay {
-        NOISE, WAT
+        NOISE, WAT, SEND_FLY
     }
 
     private record Human(String name, Class<? extends Agent> klass) implements Agent.Factory {
@@ -121,6 +140,24 @@ public final class Institute {
         @Override
         public void tick(Environment.Snapshot snapshot) {
             throw new UnsupportedOperationException();
+        }
+    }
+
+    private record Fly(String id, Object owner, Transport transport) implements Agent {
+
+        @Override
+        public Optional<Transport.Replay> call(Transport.Message message) {
+            return Optional.empty();
+        }
+
+        @Override
+        public void onEvent(Event event) {
+            //TODO:
+        }
+
+        @Override
+        public void tick(Environment.Snapshot snapshot) {
+            //TODO:
         }
     }
 }
