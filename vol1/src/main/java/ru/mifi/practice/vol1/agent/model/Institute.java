@@ -5,39 +5,51 @@ import ru.mifi.practice.vol1.agent.Environment;
 import ru.mifi.practice.vol1.agent.Event;
 import ru.mifi.practice.vol1.agent.Transport;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
-public final class Institute implements Agent.Iterator {
-    private final Agent[] agents = new Agent[]{
-        new Lector(), new Student("Саша"), new Student("Маша"), new Student("Наташа")
-    };
-    private final AtomicInteger agentIndex = new AtomicInteger(0);
+public final class Institute {
     private final Environment environment;
 
-    public Institute(Transport.Factory transportFactory, Environment.Factory environmentFactory) {
-        this.environment = environmentFactory.create(transportFactory);
-        this.environment.register(this);
-    }
+    public Institute() {
+        this.environment = new Environment.Factory.Default().create(new Transport.Factory.Default());
+        this.environment.register(new Agent.Iterator() {
+            private final Human[] humans = new Human[]{
+                new Human("Петрович", Lector.class),
+                new Human("Саша", Student.class),
+                new Human("Маша", Student.class),
+                new Human("Наташа", Student.class),
+            };
+            private int index = 0;
 
-    @Override
-    public Optional<Agent> next(Transport transport) {
-        if (agentIndex.incrementAndGet() >= agents.length) {
-            return Optional.empty();
-        }
-        return Optional.of(agents[agentIndex.getAndIncrement()]);
+            @Override
+            public Optional<Agent> next(Transport transport) {
+                if (index >= humans.length) {
+                    return Optional.empty();
+                }
+                return Optional.of(humans[index++].create(transport));
+            }
+        });
     }
 
     public void tick() {
         environment.tick();
     }
 
-    private static final class Lector implements Agent {
-
-        @Override
-        public Object id() {
-            return "Петрович";
+    private record Human(String name, Class<? extends Agent> klass) implements Agent.Factory {
+        public Agent create(Transport transport) {
+            try {
+                var constructor = klass().getConstructor(String.class, Transport.class);
+                constructor.setAccessible(true);
+                return constructor.newInstance(name(), transport);
+            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException
+                     | InvocationTargetException e) {
+                throw new IllegalArgumentException(e);
+            }
         }
+    }
+
+    private record Lector(String id, Transport transport) implements Agent {
 
         @Override
         public Optional<Transport.Replay> call(Transport.Message message) {
@@ -55,7 +67,7 @@ public final class Institute implements Agent.Iterator {
         }
     }
 
-    private record Student(String id) implements Agent {
+    private record Student(String id, Transport transport) implements Agent {
 
         @Override
         public Optional<Transport.Replay> call(Transport.Message message) {
