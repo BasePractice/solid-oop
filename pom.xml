@@ -14,7 +14,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <version.junit>1.11.2</version.junit>
-        <version.jupiter>5.11.1</version.jupiter>
+        <version.jupiter>5.11.2</version.jupiter>
         <version.pmd>6.52.0</version.pmd>
     </properties>
 
