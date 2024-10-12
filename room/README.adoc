@@ -9,4 +9,4 @@
 
 == Диаграмма
 
-image:{docdir}/model.png[]
+image:model.png[]
