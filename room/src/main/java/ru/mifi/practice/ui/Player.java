@@ -1,5 +1,7 @@
 package ru.mifi.practice.ui;
 
+import ru.mifi.practice.room.Room;
+
 import java.awt.*;
 
 public interface Player {
@@ -28,7 +30,7 @@ public interface Player {
 
     final class Default implements Player {
         private final Handler input;
-        private final Room.Instance instance;
+        private final Room instance;
         private final int maxStamina = 10;
         private volatile boolean updated = false;
         private int stamina = 10;
@@ -39,7 +41,7 @@ public interface Player {
         private int x = 24;
         private int y = 24;
 
-        public Default(Handler input, Room.Instance instance) {
+        public Default(Handler input, Room instance) {
             this.input = input;
             this.instance = instance;
         }

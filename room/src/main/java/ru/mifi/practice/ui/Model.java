@@ -1,17 +1,19 @@
 package ru.mifi.practice.ui;
 
+import ru.mifi.practice.room.Room;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
-import java.util.ArrayList;
+import java.util.Objects;
 
-public interface Room {
+public interface Model {
     String NAME = "Room";
 
-    static Room start(boolean development) {
+    static Model start(boolean development) {
         return new Default(development).start();
     }
 
@@ -27,214 +29,7 @@ public interface Room {
 
     void addHandler(Handler handler);
 
-    interface Instance {
-        Player player();
-
-        boolean canRender();
-
-        int width();
-
-        int height();
-
-        void renderBackground(Screen screen, int xScroll, int yScroll);
-
-        void renderSprites(Screen screen, int xScroll, int yScroll);
-
-        void renderLight(Screen lightScreen, int xScroll, int yScroll);
-
-        String name();
-
-        final class Buffer {
-            final byte[] tiles;
-            final byte[] datas;
-
-            private Buffer(int width, int height, byte[] tiles, byte[] data) {
-                this.tiles = new byte[tiles.length];
-                System.arraycopy(tiles, 0, this.tiles, 0, tiles.length);
-                this.datas = new byte[data.length];
-                System.arraycopy(data, 0, this.datas, 0, data.length);
-            }
-
-            void copy(Buffer buffer) {
-                System.arraycopy(buffer.tiles, 0, this.tiles, 0, tiles.length);
-                System.arraycopy(buffer.datas, 0, this.datas, 0, datas.length);
-//                    for (int i = 0; i < buffer.entitiesInTiles.length; i++) {
-//                        this.entitiesInTiles[i] = new HashSet<>(buffer.entitiesInTiles[i]);
-//                    }
-            }
-        }
-
-        final class Default implements Instance {
-            private final Player player;
-            private final Buffer[] buffers;
-            private final String name;
-            private final int width;
-            private final int height;
-            private byte[] tiles;
-            private byte[] data;
-            private int swapBuffer;
-
-            private int xo;
-            private int yo;
-            private int ho;
-            private int wo;
-
-
-            public Default(String name, int width, int height, Handler input, byte[] tiles, byte[] data) {
-                this.name = name;
-                this.width = width;
-                this.height = height;
-                this.buffers = new Buffer[2];
-                this.buffers[0] = new Buffer(width, height, tiles, data);
-                this.buffers[1] = new Buffer(width, height, tiles, data);
-                this.swapBuffer = 0;
-                this.tiles = buffers[swapBuffer].tiles;
-                this.data = buffers[swapBuffer].datas;
-                this.swapBuffer = 1;
-                this.player = new Player.Default(input, this);
-            }
-
-            @Override
-            public Player player() {
-                return player;
-            }
-
-            void updateSwap() {
-                int i = prevBuffer();
-                buffers[swapBuffer].copy(buffers[i]);
-            }
-
-            @Override
-            public boolean canRender() {
-                return true;
-            }
-
-            @Override
-            public int width() {
-                return width;
-            }
-
-            @Override
-            public int height() {
-                return height;
-            }
-
-            void swap() {
-                this.tiles = buffers[swapBuffer].tiles;
-                this.data = buffers[swapBuffer].datas;
-                nextBuffer();
-            }
-
-            private void nextBuffer() {
-                swapBuffer++;
-                if (swapBuffer >= buffers.length) {
-                    swapBuffer = 0;
-                }
-            }
-
-            private int prevBuffer() {
-                return swapBuffer - 1 < 0 ? buffers.length - 1 : swapBuffer - 1;
-            }
-
-            @Override
-            public void renderBackground(Screen screen, int xScroll, int yScroll) {
-                xo = xScroll >> 4;
-                yo = yScroll >> 4;
-                wo = (screen.width() + 15) >> 4;
-                ho = (screen.height() + 15) >> 4;
-                screen.setOffset(xScroll, yScroll);
-//                for (int y = yo; y <= ho + yo; y++) {
-//                    for (int x = xo; x <= wo + xo; x++) {
-//                        getTile(x, y).render(screen, this, x, y);
-//                    }
-//                }
-                screen.setOffset(0, 0);
-            }
-
-            @Override
-            public void renderSprites(Screen screen, int xScroll, int yScroll) {
-                final ArrayList<Player> rowSprites = new ArrayList<>();
-                xo = xScroll >> 4;
-                yo = yScroll >> 4;
-                wo = (screen.width() + 15) >> 4;
-                ho = (screen.height() + 15) >> 4;
-
-                screen.setOffset(xScroll, yScroll);
-                rowSprites.add(player);
-                sortAndRender(screen, rowSprites);
-//                for (int y = yo; y <= ho + yo; y++) {
-//                    for (int x = xo; x <= wo + xo; x++) {
-//                        if (x < 0 || y < 0 || x >= this.width() || y >= this.height()) continue;
-//                        rowSprites.addAll(entitiesInTiles[x + y * this.width()]);
-//                    }
-//                    if (!rowSprites.isEmpty()) {
-//                        sortAndRender(screen, rowSprites);
-//                    }
-//                    rowSprites.clear();
-//                }
-                screen.setOffset(0, 0);
-            }
-
-            private void sortAndRender(Screen screen, ArrayList<Player> rowSprites) {
-                rowSprites.forEach(p -> p.render(screen));
-            }
-
-            @Override
-            public void renderLight(Screen screen, int xScroll, int yScroll) {
-                int xo = xScroll >> 4;
-                int yo = yScroll >> 4;
-                int w = (screen.width() + 15) >> 4;
-                int h = (screen.height() + 15) >> 4;
-
-                screen.setOffset(xScroll, yScroll);
-                int r = 4;
-                for (int y = yo - r; y <= h + yo + r; y++) {
-//                    for (int x = xo - r; x <= w + xo + r; x++) {
-//                        if (x < 0 || y < 0 || x >= this.width() || y >= this.height()) continue;
-//                        Set<Entity> entities = entitiesInTiles[x + y * this.w];
-//                        for (Entity e : entities) {
-//                            // e.render(screen);
-//                            int lr = e.getLightRadius();
-//                            if (lr > 0) screen.renderLight(e.x - 1, e.y - 4, lr * 8);
-//                        }
-//                        int lr = getTile(x, y).getLightRadius(this, x, y);
-//                        if (lr > 0) screen.renderLight(x * 16 + 8, y * 16 + 8, lr * 8);
-//                    }
-                }
-                screen.setOffset(0, 0);
-            }
-
-            @Override
-            public String name() {
-                return name;
-            }
-
-//            public Tile getTile(int x, int y) {
-//                if (x < 0 || y < 0 || x >= w || y >= h) return Tile.rock;
-//                return Tile.tiles[tiles[x + y * w]];
-//            }
-//
-//            public void setTile(int x, int y, Tile t, int dataVal) {
-//                if (x < 0 || y < 0 || x >= w || y >= h) return;
-//                tiles[x + y * w] = t.id;
-//                setData(x, y, dataVal);
-//            }
-
-            public int getData(int x, int y) {
-                if (x < 0 || y < 0 || x >= width() || y >= height()) return 0;
-                return data[x + y * width()] & 0xff;
-            }
-
-            public void setData(int x, int y, int val) {
-                if (x < 0 || y < 0 || x >= width() || y >= height()) return;
-                data[x + y * width()] = (byte) val;
-            }
-
-
-        }
-    }
-
-    final class Default extends Canvas implements Runnable, Room {
+    final class Default extends Canvas implements Runnable, Model {
         private final int[] colors = new int[256];
         private final JFrame frame;
         private final Handler input;
@@ -256,7 +51,7 @@ public interface Room {
         private int drawableTicks = 0;
         private int distance;
         private boolean fastQuit = false;
-        private Instance.Default instance;
+        private Room instance;
 
         private Default(boolean development) {
             selfUpdate();
@@ -272,8 +67,7 @@ public interface Room {
             this.image = new BufferedImage(width(), height(), BufferedImage.TYPE_INT_RGB);
             this.pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
             this.input = new Handler(this);
-            this.instance = new Instance.Default(
-                "r00m", 128, 128, this.input, new byte[0], new byte[0]);
+            this.instance = Room.DEFAULT_FACTORY.create("r00m", input);
         }
 
         public Default start() {
@@ -484,16 +278,17 @@ public interface Room {
                     font.draw(msg, (width() - 8) - msg.length() * 8, yNext, Color.get(-1, 550, 550, 550));
                     yNext += 8;
                 }
-                msg = String.format("OFFSET-X: %5d", instance.xo);
+                Room.Meta meta = instance.meta();
+                msg = String.format("OFFSET-X: %5d", meta.xo());
                 font.draw(msg, (width() - 8) - msg.length() * 8, yNext, Color.get(-1, 550, 550, 550));
                 yNext += 8;
-                msg = String.format("OFFSET-Y: %5d", instance.yo);
+                msg = String.format("OFFSET-Y: %5d", meta.yo());
                 font.draw(msg, (width() - 8) - msg.length() * 8, yNext, Color.get(-1, 550, 550, 550));
                 yNext += 8;
-                msg = String.format("OFFSET-W: %5d", instance.wo + instance.xo);
+                msg = String.format("OFFSET-W: %5d", meta.wo() + meta.xo());
                 font.draw(msg, (width() - 8) - msg.length() * 8, yNext, Color.get(-1, 550, 550, 550));
                 yNext += 8;
-                msg = String.format("OFFSET-H: %5d", instance.ho + instance.yo);
+                msg = String.format("OFFSET-H: %5d", meta.ho() + meta.yo());
                 font.draw(msg, (width() - 8) - msg.length() * 8, yNext, Color.get(-1, 550, 550, 550));
                 yNext += 8;
             }
@@ -594,8 +389,10 @@ public interface Room {
             image = new BufferedImage(width(), height(), BufferedImage.TYPE_INT_RGB);
             pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
             try {
-                screen = new Screen.Default(width(), height(), new SpriteSheet(ImageIO.read(Room.class.getResourceAsStream("/icons.png"))));
-                lightScreen = new Screen.Default(width(), height(), new SpriteSheet(ImageIO.read(Room.class.getResourceAsStream("/icons.png"))));
+                screen = new Screen.Default(width(), height(),
+                    new SpriteSheet(ImageIO.read(Objects.requireNonNull(Model.class.getResourceAsStream("/icons.png")))));
+                lightScreen = new Screen.Default(width(), height(),
+                    new SpriteSheet(ImageIO.read(Objects.requireNonNull(Model.class.getResourceAsStream("/icons.png")))));
                 font = new Font.Default(screen);
             } catch (Exception ex) {
                 ex.printStackTrace();

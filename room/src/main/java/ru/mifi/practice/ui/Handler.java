@@ -18,7 +18,7 @@ public final class Handler implements KeyListener {
     public final Key menu = new Key(keys);
     public final Key up = new Key(keys);
 
-    public Handler(Room room) {
+    public Handler(Model room) {
         room.addHandler(this);
     }
 
