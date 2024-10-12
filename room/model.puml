@@ -1,0 +1,97 @@
+@startuml
+interface Entity
+interface Static
+interface Dynamic
+interface Bug
+interface Human
+interface Screen
+
+interface Entity {
+    Любой взаимодействующий
+    элемент модели
+    --
+    +id()
+    +x()
+    +y()
+    +z()
+    +getLightRadius()
+    +render(Screen)
+}
+Entity::render --> Screen
+
+interface Static extends Entity {
+    Не перемещающийся
+    объект
+    --
+}
+
+interface Dynamic extends Entity {
+    Перемещающийся
+    объект
+    --
+    +tick()
+}
+
+interface Bug extends Dynamic {
+    Любое насекомое
+    --
+}
+
+interface Human extends Dynamic {
+    Человек
+    --
+}
+
+interface Screen {
+    Отрисовка
+    --
+    +width()
+    +height()
+    +clear(int)
+    +setOffset(int,int)
+    +overlay(Screen,int,int)
+    +render(int,int,int,int,int)
+    +renderLight(int,int,int)
+    +draw(String,int,int,int)
+    +pixel(int);
+    +xLatestOffset();
+    +yLatestOffset();
+}
+
+abstract class AbstractEntity implements Entity {
+    Общее представление
+    об объекте
+    --
+    -id: int
+    -x: int
+    -y: int
+    -z: int
+    -side: int
+
+    +UUID id()
+    +int x()
+    +int y()
+    +int z()
+}
+
+class Player extends AbstractEntity implements Human {
+    Игрок
+    --
+}
+
+class Fly extends AbstractEntity implements Bug {
+    Муха
+    --
+}
+
+class Beetle extends AbstractEntity implements Bug {
+    Таракан
+    --
+}
+
+class DefaultScreen implements Screen {
+    Реализация по умолчанию
+    --
+}
+
+@enduml
