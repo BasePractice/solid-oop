@@ -10,12 +10,12 @@ interface Entity {
     Любой взаимодействующий
     элемент модели
     --
-    +id()
-    +x()
-    +y()
-    +z()
-    +getLightRadius()
-    +render(Screen)
+    +UUID id()
+    +int x()
+    +int y()
+    +int z()
+    +int getLightRadius()
+    +void render(Screen)
 }
 Entity::render --> Screen
 
@@ -29,7 +29,7 @@ interface Dynamic extends Entity {
     Перемещающийся
     объект
     --
-    +tick()
+    +void tick()
 }
 
 interface Bug extends Dynamic {
@@ -40,14 +40,21 @@ interface Bug extends Dynamic {
 interface Human extends Dynamic {
     Человек
     --
+    +void attack(AttackLimb limb)
+}
+Human::attack --> AttackLimb
+
+interface Item extends Entity {
+    Объект воздействия
+    --
 }
 
 interface Screen {
     Отрисовка
     --
-    +width()
-    +height()
-    +clear(int)
+    +int width()
+    +int height()
+    +void clear(int color)
     +setOffset(int,int)
     +overlay(Screen,int,int)
     +render(int,int,int,int,int)
@@ -77,7 +84,11 @@ abstract class AbstractEntity implements Entity {
 class Player extends AbstractEntity implements Human {
     Игрок
     --
+    -handItem: Item
+    -lagItem : Item
 }
+Player::handItem --> Item
+Player::lagItem  --> Item
 
 class Fly extends AbstractEntity implements Bug {
     Муха
@@ -89,9 +100,43 @@ class Beetle extends AbstractEntity implements Bug {
     --
 }
 
+class Scolopendra extends AbstractEntity implements Bug {
+    Сколопендра
+    --
+}
+
+class Slipper implements Item {
+    Тапок
+    --
+}
+
+class Swatter implements Item {
+    Мухобойка
+    --
+}
+
+class Fire implements Item {
+    Аэрозолевый
+    баллончик
+    --
+}
+
 class DefaultScreen implements Screen {
     Реализация по умолчанию
     --
+}
+
+class DefaultCube implements Static {
+    Куб некого
+    объема
+    --
+}
+
+enum AttackLimb {
+    Атакующая конечность
+    --
+    LAG
+    HAND
 }
 
 @enduml
