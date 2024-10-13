@@ -1,5 +1,6 @@
 package ru.mifi.practice.ui;
 
+import ru.mifi.practice.entity.Entity;
 import ru.mifi.practice.room.Room;
 
 import javax.imageio.ImageIO;
@@ -51,7 +52,7 @@ public interface Model {
         private int drawableTicks = 0;
         private int distance;
         private boolean fastQuit = false;
-        private Room instance;
+        private Room room;
 
         private Default(boolean development) {
             selfUpdate();
@@ -67,7 +68,7 @@ public interface Model {
             this.image = new BufferedImage(width(), height(), BufferedImage.TYPE_INT_RGB);
             this.pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
             this.input = new Handler(this);
-            this.instance = Room.DEFAULT_FACTORY.create("r00m", input);
+            this.room = Room.DEFAULT_FACTORY.create("r00m", input);
         }
 
         public Default start() {
@@ -194,7 +195,7 @@ public interface Model {
                 input.releaseAll();
             } else {
                 input.tick();
-                Player player = instance != null ? instance.player() : null;
+                Entity.Human player = room != null ? room.player() : null;
                 if (player != null) {
                     gameTime++;
                     player.tick();
@@ -217,8 +218,8 @@ public interface Model {
                 return;
             }
 
-            Player player = instance.player();
-            if (player != null && instance.canRender()) {
+            Entity.Human player = room.player();
+            if (player != null && room.canRender()) {
                 int xScroll = player.x() - screen.width() / 2;
                 int yScroll = player.y() - (screen.height() - 8) / 2;
                 if (xScroll < 16) {
@@ -227,11 +228,11 @@ public interface Model {
                 if (yScroll < 16) {
                     yScroll = 16;
                 }
-                if (xScroll > instance.width() * 16 - screen.width() - 16) {
-                    xScroll = instance.width() * 16 - screen.width() - 16;
+                if (xScroll > room.width() * 16 - screen.width() - 16) {
+                    xScroll = room.width() * 16 - screen.width() - 16;
                 }
-                if (yScroll > instance.height() * 16 - screen.height() - 16) {
-                    yScroll = instance.height() * 16 - screen.height() - 16;
+                if (yScroll > room.height() * 16 - screen.height() - 16) {
+                    yScroll = room.height() * 16 - screen.height() - 16;
                 }
                 if (currentLevel > 3) {
                     int col = Color.get(20, 20, 121, 121);
@@ -241,12 +242,12 @@ public interface Model {
                         }
                     }
                 }
-                instance.renderBackground(screen, xScroll, yScroll);
-                instance.renderSprites(screen, xScroll, yScroll);
+                room.renderBackground(screen, xScroll, yScroll);
+                room.renderSprites(screen, xScroll, yScroll);
 
                 if (currentLevel < 3) {
                     lightScreen.clear(0);
-                    instance.renderLight(lightScreen, xScroll, yScroll);
+                    room.renderLight(lightScreen, xScroll, yScroll);
                     screen.overlay(lightScreen, xScroll, yScroll);
                 }
             }
@@ -265,7 +266,7 @@ public interface Model {
                 font.draw(msg, (width() - 8) - msg.length() * 8, yNext, Color.get(-1, 550, 550, 550));
                 yNext += 8;
                 if (player != null) {
-                    msg = String.format("MAP: %5s", instance.name());
+                    msg = String.format("MAP: %5s", room.name());
                     font.draw(msg, (width() - 8) - msg.length() * 8, yNext, Color.get(-1, 550, 550, 550));
                     yNext += 8;
                     msg = String.format("X  : %5d", player.x());
@@ -278,7 +279,7 @@ public interface Model {
                     font.draw(msg, (width() - 8) - msg.length() * 8, yNext, Color.get(-1, 550, 550, 550));
                     yNext += 8;
                 }
-                Room.Meta meta = instance.meta();
+                Room.Meta meta = room.meta();
                 msg = String.format("OFFSET-X: %5d", meta.xo());
                 font.draw(msg, (width() - 8) - msg.length() * 8, yNext, Color.get(-1, 550, 550, 550));
                 yNext += 8;
@@ -321,7 +322,7 @@ public interface Model {
                 }
             }
 
-            Player player = instance != null ? instance.player() : null;
+            Entity.Human player = room != null ? room.player() : null;
             if (player != null) {
                 for (int i = 0; i < 10; i++) {
                     if (i < player.health()) {

@@ -130,6 +130,10 @@ public final class Handler implements KeyListener {
     public void keyTyped(KeyEvent ke) {
     }
 
+    public boolean isAttacked() {
+        return attack.clicked;
+    }
+
     public static sealed class Key {
         public boolean down;
         public boolean clicked;

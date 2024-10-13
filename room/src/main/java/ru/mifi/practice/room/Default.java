@@ -1,19 +1,20 @@
 package ru.mifi.practice.room;
 
+import ru.mifi.practice.entity.DynamicObjects;
 import ru.mifi.practice.entity.Entity;
 import ru.mifi.practice.ui.Handler;
-import ru.mifi.practice.ui.Player;
 import ru.mifi.practice.ui.Screen;
 import ru.mifi.practice.ui.Tile;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-final class R00m implements Room {
-    private final Player player;
+final class Default implements Room {
+    private final Entity.Human player;
     private final Buffer[] buffers;
     private final String name;
     private final int width;
@@ -30,7 +31,7 @@ final class R00m implements Room {
     private int wo;
 
 
-    R00m(String name, int width, int height, Handler input, byte[] tiles, byte[] data) {
+    Default(String name, int width, int height, Handler input, byte[] tiles, byte[] data) {
         this.name = name;
         this.width = width;
         this.height = height;
@@ -42,11 +43,16 @@ final class R00m implements Room {
         this.data = buffers[swapBuffer].datas;
         this.entitiesInTiles = buffers[swapBuffer].entitiesInTiles;
         this.swapBuffer = 1;
-        this.player = new Player.Default(input, this);
+        this.player = DynamicObjects.createPlayer(input, this);
+//        putEntity(this.player, 24);
+    }
+
+    public Default(String name, Handler input, Data data) {
+        this(name, data.width(), data.height(), input, data.tiles(), data.data());
     }
 
     @Override
-    public Player player() {
+    public Entity.Human player() {
         return player;
     }
 
@@ -148,7 +154,7 @@ final class R00m implements Room {
         ho = (screen.height() + 15) >> 4;
 
         screen.setOffset(xScroll, yScroll);
-//                rowSprites.add(player);
+        rowSprites.add(player);
         sortAndRender(screen, rowSprites);
         for (int y = yo; y <= ho + yo; y++) {
             for (int x = xo; x <= wo + xo; x++) {
@@ -202,11 +208,18 @@ final class R00m implements Room {
     }
 
     @Override
+    public Set<Entity> getEntities(int x0, int y0, int x1, int y1) {
+        return getEntities(entitiesInTiles, width, height, x0, y0, x1, y1);
+    }
+
+    @Override
     public Tile getTile(int x, int y) {
         if (x < 0 || y < 0 || x >= width || y >= height) {
             return Tile.ROCK;
         }
-        return Tile.TILES[tiles[x + y * width]];
+        byte id = tiles[x + y * width];
+        Tile tile = Tile.TILES[id];
+        return tile;
     }
 
     @Override
@@ -247,4 +260,23 @@ final class R00m implements Room {
         return entities.get(e.id());
     }
 
+    public static Set<Entity> getEntities(Set<Entity>[] entitiesInTiles, int w, int h, int x0, int y0, int x1, int y1) {
+        Set<Entity> result = new HashSet<>();
+        int xt0 = (x0 >> 4) - 1;
+        int yt0 = (y0 >> 4) - 1;
+        int xt1 = (x1 >> 4) + 1;
+        int yt1 = (y1 >> 4) + 1;
+        for (int y = yt0; y <= yt1; y++) {
+            for (int x = xt0; x <= xt1; x++) {
+                if (x < 0 || y < 0 || x >= w || y >= h) continue;
+                Set<Entity> entities = entitiesInTiles[x + y * w];
+                for (Entity e : entities) {
+                    if (e.intersects(x0, y0, x1, y1)) {
+                        result.add(e);
+                    }
+                }
+            }
+        }
+        return result;
+    }
 }

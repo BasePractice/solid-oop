@@ -2,7 +2,6 @@ package ru.mifi.practice.room;
 
 import ru.mifi.practice.entity.Entity;
 import ru.mifi.practice.ui.Handler;
-import ru.mifi.practice.ui.Player;
 import ru.mifi.practice.ui.Screen;
 import ru.mifi.practice.ui.Tile;
 
@@ -11,9 +10,20 @@ import java.util.Set;
 
 public interface Room {
     int DIRT_COLOR = 322;
-    Factory DEFAULT_FACTORY = (name, input) -> new R00m("r00m", 128, 128, input, new byte[0], new byte[0]);
+    int GRASS_COLOR = 141;
+    Generator DEFAULT_GENERATOR = (width, height) -> {
+        Data data = new Data(width, height, new byte[width * height], new byte[width * height]);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                data.tiles[x * y] = Tile.GRASS.id();
+            }
+        }
+        return data;
+    };
+    Factory DEFAULT_FACTORY = (name, input) ->
+        new Default("r00m", input, DEFAULT_GENERATOR.generate(24, 24));
 
-    Player player();
+    Entity.Human player();
 
     boolean canRender();
 
@@ -39,9 +49,16 @@ public interface Room {
 
     String name();
 
+    Set<Entity> getEntities(int x0, int y0, int x1, int y1);
+
     interface Factory {
 
         Room create(String name, Handler input);
+    }
+
+    @FunctionalInterface
+    interface Generator {
+        Data generate(int width, int height);
     }
 
     final class Buffer {
@@ -75,6 +92,10 @@ public interface Room {
     }
 
     record Meta(int xo, int yo, int ho, int wo) {
+    }
+
+    record Data(int width, int height, byte[] tiles, byte[] data) {
+
     }
 
 }
