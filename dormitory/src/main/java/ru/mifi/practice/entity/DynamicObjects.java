@@ -67,8 +67,12 @@ public final class DynamicObjects {
         public boolean move(Room room, int xa, int ya) {
             if (xa != 0 || ya != 0) {
                 boolean stopped = true;
-                if (xa != 0 && move2(room, xa, 0)) stopped = false;
-                if (ya != 0 && move2(room, 0, ya)) stopped = false;
+                if (xa != 0 && move2(room, xa, 0)) {
+                    stopped = false;
+                }
+                if (ya != 0 && move2(room, 0, ya)) {
+                    stopped = false;
+                }
                 if (!stopped) {
                     int xt = x >> 4;
                     int yt = y >> 4;
@@ -101,24 +105,27 @@ public final class DynamicObjects {
                         return false;
                     }
                 }
-            if (blocked) return false;
+            if (blocked) {
+                return false;
+            }
 
             Set<Entity> wasInside = room.getEntities(x - xr, y - yr, x + xr, y + yr);
             Set<Entity> isInside = room.getEntities(x + xa - xr, y + ya - yr, x + xa + xr, y + ya + yr);
             for (Entity e : isInside) {
-                if (e == this) continue;
-
+                if (e == this) {
+                    continue;
+                }
                 e.touchedBy(this);
             }
             isInside.removeAll(wasInside);
             for (Entity e : isInside) {
-                if (e == this) continue;
-
+                if (e == this) {
+                    continue;
+                }
                 if (e.blocks(this)) {
                     return false;
                 }
             }
-
             x += xa;
             y += ya;
             return true;
@@ -304,8 +311,8 @@ public final class DynamicObjects {
         public int getLightRadius() {
             int r = 10;
 //            if (activeItem != null) {
-//                if (activeItem instanceof FurnitureItem) {
-//                    int rr = ((FurnitureItem) activeItem).furniture.getLightRadius();
+//                if (activeItem instanceof LightItem li) {
+//                    int rr = li.getLightRadius();
 //                    if (rr > r)
 //                        r = rr;
 //                }

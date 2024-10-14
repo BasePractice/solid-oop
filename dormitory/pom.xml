@@ -8,7 +8,6 @@
         <version>2024.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>room</artifactId>
-    <name>room</name>
-
+    <artifactId>dormitory</artifactId>
+    <name>dormitory</name>
 </project>

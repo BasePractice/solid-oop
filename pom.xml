@@ -27,7 +27,7 @@
     </scm>
 
     <modules>
-        <module>room</module>
+        <module>dormitory</module>
     </modules>
 
     <dependencyManagement>
