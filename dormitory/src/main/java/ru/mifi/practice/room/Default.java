@@ -44,11 +44,31 @@ final class Default implements Room {
         this.entitiesInTiles = buffers[swapBuffer].entitiesInTiles;
         this.swapBuffer = 1;
         this.player = DynamicObjects.createPlayer(input, this);
-//        putEntity(this.player, 24);
+        add(this.player);
     }
 
     public Default(String name, Handler input, Data data) {
         this(name, data.width(), data.height(), input, data.tiles(), data.data());
+    }
+
+    public static Set<Entity> getEntities(Set<Entity>[] entitiesInTiles, int w, int h, int x0, int y0, int x1, int y1) {
+        Set<Entity> result = new HashSet<>();
+        int xt0 = (x0 >> 4) - 1;
+        int yt0 = (y0 >> 4) - 1;
+        int xt1 = (x1 >> 4) + 1;
+        int yt1 = (y1 >> 4) + 1;
+        for (int y = yt0; y <= yt1; y++) {
+            for (int x = xt0; x <= xt1; x++) {
+                if (x < 0 || y < 0 || x >= w || y >= h) continue;
+                Set<Entity> entities = entitiesInTiles[x + y * w];
+                for (Entity e : entities) {
+                    if (e.intersects(x0, y0, x1, y1)) {
+                        result.add(e);
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     @Override
@@ -154,11 +174,12 @@ final class Default implements Room {
         ho = (screen.height() + 15) >> 4;
 
         screen.setOffset(xScroll, yScroll);
-        rowSprites.add(player);
         sortAndRender(screen, rowSprites);
         for (int y = yo; y <= ho + yo; y++) {
             for (int x = xo; x <= wo + xo; x++) {
-                if (x < 0 || y < 0 || x >= this.width() || y >= this.height()) continue;
+                if (x < 0 || y < 0 || x >= this.width() || y >= this.height()) {
+                    continue;
+                }
                 rowSprites.addAll(entitiesInTiles[x + y * this.width()]);
             }
             if (!rowSprites.isEmpty()) {
@@ -175,16 +196,18 @@ final class Default implements Room {
 
     @Override
     public void renderLight(Screen screen, int xScroll, int yScroll) {
-        int xo = xScroll >> 4;
-        int yo = yScroll >> 4;
-        int w = (screen.width() + 15) >> 4;
-        int h = (screen.height() + 15) >> 4;
+        xo = xScroll >> 4;
+        yo = yScroll >> 4;
+        wo = (screen.width() + 15) >> 4;
+        ho = (screen.height() + 15) >> 4;
 
         screen.setOffset(xScroll, yScroll);
         int r = 4;
-        for (int y = yo - r; y <= h + yo + r; y++) {
-            for (int x = xo - r; x <= w + xo + r; x++) {
-                if (x < 0 || y < 0 || x >= this.width() || y >= this.height()) continue;
+        for (int y = yo - r; y <= ho + yo + r; y++) {
+            for (int x = xo - r; x <= wo + xo + r; x++) {
+                if (x < 0 || y < 0 || x >= this.width() || y >= this.height()) {
+                    continue;
+                }
                 Set<Entity> entities = entitiesInTiles[x + y * this.width()];
                 for (Entity e : entities) {
                     // e.render(screen);
@@ -210,6 +233,40 @@ final class Default implements Room {
     @Override
     public Set<Entity> getEntities(int x0, int y0, int x1, int y1) {
         return getEntities(entitiesInTiles, width, height, x0, y0, x1, y1);
+    }
+
+    @Override
+    public void tick() {
+        for (Entity.Data e : new HashMap<>(entities).values()) {
+            if (e.entity() instanceof Entity.Dynamic entity) {
+                int xto = entity.x() >> 4;
+                int yto = entity.y() >> 4;
+                int rxo = entity.x();
+                int ryo = entity.y();
+
+                entity.tick();
+                if (entity.isRemoved()) {
+                    entities.remove(entity.id());
+                    removeEntity(xto, yto, entity);
+//                    if (entity instanceof DynamicObjects.Player && ((Player) e.entity).die) {
+//                        //
+//                    }
+                } else {
+                    int xt = entity.x() >> 4;
+                    int yt = entity.y() >> 4;
+                    int rx = entity.x();
+                    int ry = entity.y();
+
+                    if (xto != xt || yto != yt) {
+                        removeEntity(xto, yto, entity);
+                        insertEntity(xt, yt, entity);
+                    } else if ((rx != rxo || ry != ryo)) {
+                        removeEntity(xto, yto, entity);
+                        insertEntity(xt, yt, entity);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -256,27 +313,36 @@ final class Default implements Room {
         entities.put(e.id(), new Entity.Data(index, e));
     }
 
-    Entity.Data removeEntity(Entity e) {
-        return entities.get(e.id());
+    public void add(Entity entity) {
+//        entity.removed = false;
+//        entity.init(this);
+        insertEntity(entity.x() >> 4, entity.y() >> 4, entity);
     }
 
-    public static Set<Entity> getEntities(Set<Entity>[] entitiesInTiles, int w, int h, int x0, int y0, int x1, int y1) {
-        Set<Entity> result = new HashSet<>();
-        int xt0 = (x0 >> 4) - 1;
-        int yt0 = (y0 >> 4) - 1;
-        int xt1 = (x1 >> 4) + 1;
-        int yt1 = (y1 >> 4) + 1;
-        for (int y = yt0; y <= yt1; y++) {
-            for (int x = xt0; x <= xt1; x++) {
-                if (x < 0 || y < 0 || x >= w || y >= h) continue;
-                Set<Entity> entities = entitiesInTiles[x + y * w];
-                for (Entity e : entities) {
-                    if (e.intersects(x0, y0, x1, y1)) {
-                        result.add(e);
-                    }
-                }
-            }
+    public void remove(Entity e) {
+        int xto = e.x() >> 4;
+        int yto = e.y() >> 4;
+        removeEntity(xto, yto, e);
+    }
+
+    public void insertEntity(int x, int y, Entity e) {
+        if (x < 0 || y < 0 || x >= width() || y >= height)
+            return;
+        int index = x + y * width;
+        putEntity(e, index);
+        entitiesInTiles[index].add(e);
+    }
+
+    public void removeEntity(int x, int y, Entity e) {
+        if (x < 0 || y < 0 || x >= width || y >= height) return;
+        int i = x + y * width;
+        Entity.Data data = removeEntity(e);
+        if (data != null) {
+            entitiesInTiles[data.index()].remove(e);
         }
-        return result;
+    }
+
+    Entity.Data removeEntity(Entity e) {
+        return entities.get(e.id());
     }
 }

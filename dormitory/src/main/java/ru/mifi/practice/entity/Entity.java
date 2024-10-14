@@ -72,6 +72,8 @@ public interface Entity {
          * Метод действия над объектом
          */
         void tick();
+
+        boolean isRemoved();
     }
 
     interface Bug extends Dynamic {
@@ -95,7 +97,8 @@ public interface Entity {
 
         enum State {
             STAY,
-            WALK
+            WALK,
+            ATCK
         }
     }
 

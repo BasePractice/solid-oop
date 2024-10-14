@@ -60,6 +60,11 @@ public final class DynamicObjects {
         }
 
         @Override
+        public boolean isRemoved() {
+            return false;
+        }
+
+        @Override
         public boolean intersects(int x0, int y0, int x1, int y1) {
             return !(x + xr < x0 || y + yr < y0 || x - xr > x1 || y - yr > y1);
         }
@@ -221,6 +226,23 @@ public final class DynamicObjects {
                 }
             }
 
+            {
+                if (xa != 0 || ya != 0) {
+                    boolean stopped = true;
+                    if (xa != 0 && move2(room, xa, 0)) {
+                        stopped = false;
+                    }
+                    if (ya != 0 && move2(room, 0, ya)) {
+                        stopped = false;
+                    }
+                    if (!stopped) {
+                        int xt = x >> 4;
+                        int yt = y >> 4;
+                        room.getTile(xt, yt).steppedOn(room, xt, yt, this);
+                    }
+                }
+            }
+
 
             return new Point(xa, ya);
         }
@@ -309,7 +331,7 @@ public final class DynamicObjects {
 
         @Override
         public int getLightRadius() {
-            int r = 10;
+//            int r = 10;
 //            if (activeItem != null) {
 //                if (activeItem instanceof LightItem li) {
 //                    int rr = li.getLightRadius();
@@ -317,7 +339,7 @@ public final class DynamicObjects {
 //                        r = rr;
 //                }
 //            }
-            return r;
+            return 5;
         }
 
         @Override
@@ -382,6 +404,7 @@ public final class DynamicObjects {
                     stamina--;
                     staminaRecharge = 0;
                     attack();
+                    state = State.ATCK;
                 }
                 updated = true;
             }

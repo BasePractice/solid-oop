@@ -51,6 +51,8 @@ public interface Room {
 
     Set<Entity> getEntities(int x0, int y0, int x1, int y1);
 
+    void tick();
+
     interface Factory {
 
         Room create(String name, Handler input);

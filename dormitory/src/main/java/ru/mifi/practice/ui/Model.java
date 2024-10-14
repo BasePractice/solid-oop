@@ -43,7 +43,7 @@ public interface Model {
         private Font font;
         private int tickCount = 0;
         private int gameTime = 0;
-        private int currentLevel = 3;
+        private int currentLevel = 2;
         private int playerDeadTime;
         private int wonTimer = 0;
         private boolean hasWon = false;
@@ -195,6 +195,7 @@ public interface Model {
                 input.releaseAll();
             } else {
                 input.tick();
+                room.tick();
                 Entity.Human player = room != null ? room.player() : null;
                 if (player != null) {
                     gameTime++;
