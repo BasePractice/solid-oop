@@ -15,6 +15,7 @@ final class Fly extends AbstractDynamicEntity implements Entity.Bug {
     Fly(int x, int y, int z, Room room) {
         super(x, y, z, 1);
         this.room = room;
+        this.health = 20;
     }
 
     @Override
@@ -27,6 +28,13 @@ final class Fly extends AbstractDynamicEntity implements Entity.Bug {
     @Override
     public void render(Screen screen) {
         screen.setPixel(x, y, Color.get(0));
+    }
+
+    @Override
+    public void hurt(Human player, int attackDamage, int attackDir) {
+        if (random.nextFloat() < 0.1f) {
+            this.health -= attackDamage;
+        }
     }
 
     private void flying(float radius, float x, float y) {

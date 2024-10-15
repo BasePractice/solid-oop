@@ -16,6 +16,7 @@ abstract class AbstractDynamicEntity implements Entity.Dynamic {
     protected int y;
     protected int z;
     protected int side;
+    protected int health = 100;
 
     protected AbstractDynamicEntity(int x, int y, int z, int side) {
         this.id = UUID.randomUUID();
@@ -52,7 +53,7 @@ abstract class AbstractDynamicEntity implements Entity.Dynamic {
 
     @Override
     public boolean isRemoved() {
-        return false;
+        return health <= 0;
     }
 
     @Override
@@ -67,7 +68,7 @@ abstract class AbstractDynamicEntity implements Entity.Dynamic {
 
     @Override
     public int health() {
-        return 0;
+        return health;
     }
 
     public boolean move(Room room, int xa, int ya) {

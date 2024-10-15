@@ -43,7 +43,7 @@ public interface Model {
         private Font font;
         private int tickCount = 0;
         private int gameTime = 0;
-        private int currentLevel = 2;
+        private int lightning = 3;
         private int playerDeadTime;
         private int wonTimer = 0;
         private boolean hasWon = false;
@@ -235,7 +235,7 @@ public interface Model {
                 if (yScroll > room.height() * 16 - screen.height() - 16) {
                     yScroll = room.height() * 16 - screen.height() - 16;
                 }
-                if (currentLevel > 3) {
+                if (lightning > 3) {
                     int col = Color.get(20, 20, 121, 121);
                     for (int y = 0; y < 14; y++) {
                         for (int x = 0; x < 24; x++) {
@@ -246,7 +246,7 @@ public interface Model {
                 room.renderBackground(screen, xScroll, yScroll);
                 room.renderSprites(screen, xScroll, yScroll);
 
-                if (currentLevel < 3) {
+                if (lightning < 3) {
                     lightScreen.clear(0);
                     room.renderLight(lightScreen, xScroll, yScroll);
                     screen.overlay(lightScreen, xScroll, yScroll);

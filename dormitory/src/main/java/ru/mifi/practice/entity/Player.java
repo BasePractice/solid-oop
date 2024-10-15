@@ -23,7 +23,6 @@ final class Player extends AbstractDynamicEntity implements Entity.Human {
     private int attackDir;
     private volatile boolean updated = false;
     private int stamina = 10;
-    private int health = 10;
     private int staminaRecharge;
     private int staminaRechargeDelay = 40;
     private State state = State.STAY;
@@ -32,16 +31,12 @@ final class Player extends AbstractDynamicEntity implements Entity.Human {
         super(24, 24, 0, 1);
         this.input = input;
         this.room = room;
+        this.health = 10;
     }
 
     @Override
     public int stamina() {
         return stamina;
-    }
-
-    @Override
-    public int health() {
-        return health;
     }
 
     @Override

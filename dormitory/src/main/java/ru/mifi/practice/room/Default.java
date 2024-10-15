@@ -45,7 +45,7 @@ final class Default implements Room {
         this.swapBuffer = 1;
         this.player = factory.createPlayer(input, this);
         add(this.player);
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 100; i++) {
             add(factory.createFly(i * 2, 40, 5, this));
         }
     }
