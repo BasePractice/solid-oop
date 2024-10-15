@@ -245,8 +245,10 @@ final class Default implements Room {
 
                 entity.tick();
                 if (entity.isRemoved()) {
+//                    remove(entity);
                     entities.remove(entity.id());
                     removeEntity(xto, yto, entity);
+                    System.out.println("Removed: " + entity.getClass().getSimpleName());
 //                    if (entity instanceof DynamicObjects.Player && ((Player) e.entity).die) {
 //                        //
 //                    }
