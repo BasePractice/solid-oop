@@ -1,7 +1,7 @@
 package ru.mifi.practice.room;
 
-import ru.mifi.practice.entity.DynamicObjects;
 import ru.mifi.practice.entity.Entity;
+import ru.mifi.practice.entity.EntityFactory;
 import ru.mifi.practice.ui.Handler;
 import ru.mifi.practice.ui.Screen;
 import ru.mifi.practice.ui.Tile;
@@ -30,25 +30,24 @@ final class Default implements Room {
     private int ho;
     private int wo;
 
-
-    Default(String name, int width, int height, Handler input, byte[] tiles, byte[] data) {
+    public Default(String name, Handler input, int width, int height, Generator generator, EntityFactory factory) {
         this.name = name;
         this.width = width;
         this.height = height;
+        Data generate = generator.generate(width, height, factory);
         this.buffers = new Buffer[2];
-        this.buffers[0] = new Buffer(width, height, tiles, data);
-        this.buffers[1] = new Buffer(width, height, tiles, data);
+        this.buffers[0] = new Buffer(width, height, generate.tiles(), generate.data());
+        this.buffers[1] = new Buffer(width, height, generate.tiles(), generate.data());
         this.swapBuffer = 0;
         this.tiles = buffers[swapBuffer].tiles;
         this.data = buffers[swapBuffer].datas;
         this.entitiesInTiles = buffers[swapBuffer].entitiesInTiles;
         this.swapBuffer = 1;
-        this.player = DynamicObjects.createPlayer(input, this);
+        this.player = factory.createPlayer(input, this);
         add(this.player);
-    }
-
-    public Default(String name, Handler input, Data data) {
-        this(name, data.width(), data.height(), input, data.tiles(), data.data());
+        for (int i = 0; i < 50; i++) {
+            add(factory.createFly(i * 2, 40, 5, this));
+        }
     }
 
     public static Set<Entity> getEntities(Set<Entity>[] entitiesInTiles, int w, int h, int x0, int y0, int x1, int y1) {

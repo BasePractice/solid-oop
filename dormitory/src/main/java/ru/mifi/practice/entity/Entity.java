@@ -46,7 +46,7 @@ public interface Entity {
     }
 
     default boolean blocks(Entity entity) {
-       return false;
+        return false;
     }
 
     interface Item extends Entity {
@@ -74,24 +74,20 @@ public interface Entity {
         void tick();
 
         boolean isRemoved();
+
+        Point move();
+
+        int health();
     }
 
     interface Bug extends Dynamic {
 
     }
 
-    interface Human extends Dynamic {
+    sealed interface Human extends Dynamic permits Player {
         int stamina();
 
-        int health();
-
         int staminaRechargeDelay();
-
-        Point move();
-
-        void render(Screen screen);
-
-        void tick();
 
         State state();
 

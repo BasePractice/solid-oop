@@ -21,6 +21,8 @@ public interface Screen {
 
     int pixel(int i);
 
+    void setPixel(int x, int y, int colors);
+
     final class Default implements Screen {
         private static final int BIT_MIRROR_X = 0x01;
         private static final int BIT_MIRROR_Y = 0x02;
@@ -157,6 +159,20 @@ public interface Screen {
         @Override
         public int pixel(int i) {
             return pixels[i];
+        }
+
+        @Override
+        public void setPixel(int xp, int yp, int colors) {
+            xp -= xOffset;
+            yp -= yOffset;
+
+            if (yp < 0 || yp >= height) {
+                return;
+            }
+            if (xp < 0 || xp >= width) {
+                return;
+            }
+            pixels[xp + yp * width] = colors;
         }
     }
 }

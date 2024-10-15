@@ -1,6 +1,7 @@
 package ru.mifi.practice.room;
 
 import ru.mifi.practice.entity.Entity;
+import ru.mifi.practice.entity.EntityFactory;
 import ru.mifi.practice.ui.Handler;
 import ru.mifi.practice.ui.Screen;
 import ru.mifi.practice.ui.Tile;
@@ -11,7 +12,7 @@ import java.util.Set;
 public interface Room {
     int DIRT_COLOR = 322;
     int GRASS_COLOR = 141;
-    Generator DEFAULT_GENERATOR = (width, height) -> {
+    Generator DEFAULT_GENERATOR = (width, height, factory) -> {
         Data data = new Data(width, height, new byte[width * height], new byte[width * height]);
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -21,7 +22,7 @@ public interface Room {
         return data;
     };
     Factory DEFAULT_FACTORY = (name, input) ->
-        new Default("r00m", input, DEFAULT_GENERATOR.generate(24, 24));
+        new Default("r00m", input, 24, 24, DEFAULT_GENERATOR, EntityFactory.DEFAULT);
 
     Entity.Human player();
 
@@ -60,7 +61,7 @@ public interface Room {
 
     @FunctionalInterface
     interface Generator {
-        Data generate(int width, int height);
+        Data generate(int width, int height, EntityFactory factory);
     }
 
     final class Buffer {

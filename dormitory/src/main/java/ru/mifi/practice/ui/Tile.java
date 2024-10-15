@@ -15,7 +15,6 @@ public abstract class Tile {
     private final byte id;
     protected boolean connectsToGrass = false;
     protected boolean connectsToSand = false;
-    protected boolean connectsToLava = false;
     protected boolean connectsToWater = false;
 
     protected Tile(int id) {
@@ -60,7 +59,7 @@ public abstract class Tile {
         return false;
     }
 
-    static final class RockTile extends Tile {
+    private static final class RockTile extends Tile {
 
         private RockTile(int id) {
             super(id);
@@ -168,7 +167,7 @@ public abstract class Tile {
         }
     }
 
-    static final class DirtTile extends Tile {
+    private static final class DirtTile extends Tile {
         public DirtTile(int id) {
             super(id);
         }
@@ -207,8 +206,8 @@ public abstract class Tile {
         }
     }
 
-    private static class GrassTile extends Tile {
-        public GrassTile(int id) {
+    private static sealed class GrassTile extends Tile permits FlowerTile {
+        private GrassTile(int id) {
             super(id);
             connectsToGrass = true;
         }
@@ -280,7 +279,7 @@ public abstract class Tile {
     }
 
     private static final class FlowerTile extends GrassTile {
-        public FlowerTile(int id) {
+        private FlowerTile(int id) {
             super(id);
             TILES[id] = this;
             connectsToGrass = true;
