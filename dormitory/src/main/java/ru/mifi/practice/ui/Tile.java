@@ -1,6 +1,9 @@
 package ru.mifi.practice.ui;
 
+import ru.mifi.practice.entity.Dynamic;
 import ru.mifi.practice.entity.Entity;
+import ru.mifi.practice.entity.Human;
+import ru.mifi.practice.entity.Item;
 import ru.mifi.practice.room.Room;
 
 import java.util.Random;
@@ -29,11 +32,11 @@ public abstract class Tile {
         return id;
     }
 
-    public boolean interact(Room room, int xt, int yt, Entity.Human player, Entity.Item item, int attackDir) {
+    public boolean interact(Room room, int xt, int yt, Human player, Item item, int attackDir) {
         return false;
     }
 
-    public boolean use(Room room, int xt, int yt, Entity.Human player, int attackDir) {
+    public boolean use(Room room, int xt, int yt, Human player, int attackDir) {
         return false;
     }
 
@@ -43,7 +46,7 @@ public abstract class Tile {
         return 0;
     }
 
-    public void hurt(Room room, int xt, int yt, Entity.Dynamic entity, int i, int attackDir) {
+    public void hurt(Room room, int xt, int yt, Dynamic entity, int i, int attackDir) {
 
     }
 
@@ -67,49 +70,57 @@ public abstract class Tile {
 
         @Override
         public void render(Screen screen, Room room, int x, int y) {
-            int col = Color.get(444, 444, 333, 333);
-            int transitionColor = Color.get(111, 444, 555, Room.DIRT_COLOR);
+            final int col = Color.get(444, 444, 333, 333);
+            final int transitionColor = Color.get(111, 444, 555, Room.DIRT_COLOR);
 
-            boolean u = room.getTile(x, y - 1) != this;
-            boolean d = room.getTile(x, y + 1) != this;
-            boolean l = room.getTile(x - 1, y) != this;
-            boolean r = room.getTile(x + 1, y) != this;
+            final boolean u = room.getTile(x, y - 1) != this;
+            final boolean d = room.getTile(x, y + 1) != this;
+            final boolean l = room.getTile(x - 1, y) != this;
+            final boolean r = room.getTile(x + 1, y) != this;
 
-            boolean ul = room.getTile(x - 1, y - 1) != this;
-            boolean dl = room.getTile(x - 1, y + 1) != this;
-            boolean ur = room.getTile(x + 1, y - 1) != this;
-            boolean dr = room.getTile(x + 1, y + 1) != this;
+            final boolean ul = room.getTile(x - 1, y - 1) != this;
+            final boolean dl = room.getTile(x - 1, y + 1) != this;
+            final boolean ur = room.getTile(x + 1, y - 1) != this;
+            final boolean dr = room.getTile(x + 1, y + 1) != this;
 
             if (!u && !l) {
-                if (!ul)
+                if (!ul) {
                     screen.render(x * 16 + 0, y * 16 + 0, 0, col, 0);
-                else
+                } else {
                     screen.render(x * 16 + 0, y * 16 + 0, 7 + 0 * 32, transitionColor, 3);
-            } else
+                }
+            } else {
                 screen.render(x * 16 + 0, y * 16 + 0, (l ? 6 : 5) + (u ? 2 : 1) * 32, transitionColor, 3);
+            }
 
             if (!u && !r) {
-                if (!ur)
+                if (!ur) {
                     screen.render(x * 16 + 8, y * 16 + 0, 1, col, 0);
-                else
+                } else {
                     screen.render(x * 16 + 8, y * 16 + 0, 8 + 0 * 32, transitionColor, 3);
-            } else
+                }
+            } else {
                 screen.render(x * 16 + 8, y * 16 + 0, (r ? 4 : 5) + (u ? 2 : 1) * 32, transitionColor, 3);
+            }
 
             if (!d && !l) {
-                if (!dl)
+                if (!dl) {
                     screen.render(x * 16 + 0, y * 16 + 8, 2, col, 0);
-                else
+                } else {
                     screen.render(x * 16 + 0, y * 16 + 8, 7 + 1 * 32, transitionColor, 3);
-            } else
+                }
+            } else {
                 screen.render(x * 16 + 0, y * 16 + 8, (l ? 6 : 5) + (d ? 0 : 1) * 32, transitionColor, 3);
+            }
             if (!d && !r) {
-                if (!dr)
+                if (!dr) {
                     screen.render(x * 16 + 8, y * 16 + 8, 3, col, 0);
-                else
+                } else {
                     screen.render(x * 16 + 8, y * 16 + 8, 8 + 1 * 32, transitionColor, 3);
-            } else
+                }
+            } else {
                 screen.render(x * 16 + 8, y * 16 + 8, (r ? 4 : 5) + (d ? 0 : 1) * 32, transitionColor, 3);
+            }
         }
 
         @Override
@@ -121,42 +132,41 @@ public abstract class Tile {
             return false;
         }
 
-//        public void hurt(Model.Room room, int x, int y, Mob source, int dmg, int attackDir) {
-//            hurt(room, x, y, dmg);
-//        }
-
-//        public boolean interact(Model.Room room, int xt, int yt, Player player, Item item, int attackDir) {
-//            if (item instanceof ToolItem) {
-//                ToolItem tool = (ToolItem) item;
-//                if (tool.type == ToolType.pickaxe) {
-//                    if (player.payStamina(4 - tool.level)) {
-//                        hurt(level, xt, yt, random.nextInt(10) + (tool.level) * 5 + 10);
-//                        return true;
-//                    }
-//                }
-//            }
-//            return false;
-//        }
+        public void hurt(Room room, int x, int y, Entity source, int dmg, int attackDir) {
+            hurt(room, x, y, dmg);
+        }
 
         public void hurt(Room room, int x, int y, int dmg) {
-//            int damage = room.getData(x, y) + dmg;
-//            level.add(new SmashParticle(level.sound, x * 16 + 8, y * 16 + 8));
-//            level.add(new TextParticle(level.sound, "" + dmg, x * 16 + 8, y * 16 + 8, Color.get(-1, 500, 500, 500)));
-//            if (damage >= 50) {
-//                int count = random.nextInt(4) + 1;
-//                for (int i = 0; i < count; i++) {
-//                    room.add(new ItemEntity(level.sound, level.playerHandler(), level.propertyReader(),
-//                        new ResourceItem(Resource.stone), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
-//                }
-//                count = random.nextInt(2);
-//                for (int i = 0; i < count; i++) {
-//                    level.add(new ItemEntity(level.sound, level.playerHandler(), level.propertyReader(),
-//                        new ResourceItem(Resource.coal), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
-//                }
-//                room.setTile(x, y, Tile.dirt, 0);
-//            } else {
-//                room.setData(x, y, damage);
-//            }
+            //            int damage = room.getData(x, y) + dmg;
+            //            level.add(new SmashParticle(level.sound, x * 16 + 8, y * 16 + 8));
+            //            level.add(new TextParticle(level.sound, "" + dmg, x * 16 + 8, y * 16 + 8, Color.get(-1, 500, 500, 500)));
+            //            if (damage >= 50) {
+            //                int count = random.nextInt(4) + 1;
+            //                for (int i = 0; i < count; i++) {
+            //                    room.add(new ItemEntity(level.sound, level.playerHandler(), level.propertyReader(),
+            //                        new ResourceItem(Resource.stone), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+            //                }
+            //                count = random.nextInt(2);
+            //                for (int i = 0; i < count; i++) {
+            //                    level.add(new ItemEntity(level.sound, level.playerHandler(), level.propertyReader(),
+            //                        new ResourceItem(Resource.coal), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+            //                }
+            //                room.setTile(x, y, Tile.dirt, 0);
+            //            } else {
+            //                room.setData(x, y, damage);
+            //            }
+        }
+
+        public boolean interact(Room room, int xt, int yt, Human player, Item item, int attackDir) {
+            if (item instanceof Item.ToolItem tool) {
+                //if (tool.type == ToolType.pickaxe) {
+                //    if (player.payStamina(4 - tool.level)) {
+                //        hurt(room, xt, yt, random.nextInt(10) + (tool.level) * 5 + 10);
+                //        return true;
+                //    }
+                //}
+            }
+            return false;
         }
 
         public void tick(Room room, int xt, int yt) {
@@ -180,28 +190,27 @@ public abstract class Tile {
             screen.render(x * 16 + 8, y * 16 + 8, 3, col, 0);
         }
 
-        public boolean interact(Room level, int xt, int yt, Entity.Human player, Entity.Item item, int attackDir) {
-//            if (item instanceof ToolItem) {
-//                ToolItem tool = (ToolItem) item;
-//                if (tool.type == ToolType.shovel) {
-//                    if (player.payStamina(4 - tool.level)) {
-//                        level.setTile(xt, yt, Tile.hole, 0);
-//                        level.add(new ItemEntity(level.sound, level.playerHandler(), level.propertyReader(),
-//                            new ResourceItem(Resource.dirt),
-//                            xt * 16 + random.nextInt(10) + 3,
-//                            yt * 16 + random.nextInt(10) + 3));
-//                        level.sound.play(xt, yt, Sound.Type.MONSTER_HURT);
-//                        return true;
-//                    }
-//                }
-//                if (tool.type == ToolType.hoe) {
-//                    if (player.payStamina(4 - tool.level)) {
-//                        level.setTile(xt, yt, Tile.farmland, 0);
-//                        level.sound.play(xt, yt, Sound.Type.MONSTER_HURT);
-//                        return true;
-//                    }
-//                }
-//            }
+        public boolean interact(Room room, int xt, int yt, Human player, Item item, int attackDir) {
+            if (item instanceof Item.ToolItem tool) {
+                //if (tool.type == ToolType.shovel) {
+                //    if (player.payStamina(4 - tool.room)) {
+                //        room.setTile(xt, yt, Tile.hole, 0);
+                //        room.add(new ItemEntity(room.sound, room.playerHandler(), room.propertyReader(),
+                //            new ResourceItem(Resource.dirt),
+                //            xt * 16 + random.nextInt(10) + 3,
+                //            yt * 16 + random.nextInt(10) + 3));
+                //        room.sound.play(xt, yt, Sound.Type.MONSTER_HURT);
+                //        return true;
+                //    }
+                //}
+                //if (tool.type == ToolType.hoe) {
+                //    if (player.payStamina(4 - tool.room)) {
+                //        room.setTile(xt, yt, Tile.farmland, 0);
+                //        room.sound.play(xt, yt, Sound.Type.MONSTER_HURT);
+                //        return true;
+                //    }
+                //}
+            }
             return false;
         }
     }
@@ -229,8 +238,9 @@ public abstract class Tile {
 
             if (!u && !r) {
                 screen.render(x * 16 + 8, y * 16 + 0, 1, col, 0);
-            } else
+            } else {
                 screen.render(x * 16 + 8, y * 16 + 0, (r ? 13 : 12) + (u ? 0 : 1) * 32, transitionColor, 0);
+            }
 
             if (!d && !l) {
                 screen.render(x * 16 + 0, y * 16 + 8, 2, col, 0);
@@ -244,35 +254,34 @@ public abstract class Tile {
             }
         }
 
-        public boolean interact(Room room, int xt, int yt, Entity.Human player, Entity.Item item, int attackDir) {
-//            if (item instanceof ToolItem) {
-//                ToolItem tool = (ToolItem) item;
-//                if (tool.type == ToolType.shovel) {
-//                    if (player.payStamina(4 - tool.level)) {
-//                        room.setTile(xt, yt, Tile.dirt, 0);
-//                        room.sound.play(xt, yt, Sound.Type.MONSTER_HURT);
-//                        if (random.nextInt(5) == 0) {
-//                            room.add(new ItemEntity(level.sound, player.handler, player.property,
-//                                new ResourceItem(Resource.seeds), xt * 16 + random.nextInt(10) + 3,
-//                                yt * 16 + random.nextInt(10) + 3));
-//                            return true;
-//                        }
-//                    }
-//                }
-//                if (tool.type == ToolType.hoe) {
-//                    if (player.payStamina(4 - tool.level)) {
-//                        room.sound.play(xt, yt, Sound.Type.MONSTER_HURT);
-//                        if (random.nextInt(5) == 0) {
-//                            room.add(new ItemEntity(level.sound, player.handler, player.property,
-//                                new ResourceItem(Resource.seeds), xt * 16 + random.nextInt(10) + 3,
-//                                yt * 16 + random.nextInt(10) + 3));
-//                            return true;
-//                        }
-//                        room.setTile(xt, yt, Tile.farmland, 0);
-//                        return true;
-//                    }
-//                }
-//            }
+        public boolean interact(Room room, int xt, int yt, Human player, Item item, int attackDir) {
+            if (item instanceof Item.ToolItem tool) {
+                //                if (tool.type == ToolType.shovel) {
+                //                    if (player.payStamina(4 - tool.level)) {
+                //                        room.setTile(xt, yt, Tile.dirt, 0);
+                //                        room.sound.play(xt, yt, Sound.Type.MONSTER_HURT);
+                //                        if (random.nextInt(5) == 0) {
+                //                            room.add(new ItemEntity(level.sound, player.handler, player.property,
+                //                                new ResourceItem(Resource.seeds), xt * 16 + random.nextInt(10) + 3,
+                //                                yt * 16 + random.nextInt(10) + 3));
+                //                            return true;
+                //                        }
+                //                    }
+                //                }
+                //                if (tool.type == ToolType.hoe) {
+                //                    if (player.payStamina(4 - tool.level)) {
+                //                        room.sound.play(xt, yt, Sound.Type.MONSTER_HURT);
+                //                        if (random.nextInt(5) == 0) {
+                //                            room.add(new ItemEntity(level.sound, player.handler, player.property,
+                //                                new ResourceItem(Resource.seeds), xt * 16 + random.nextInt(10) + 3,
+                //                                yt * 16 + random.nextInt(10) + 3));
+                //                            return true;
+                //                        }
+                //                        room.setTile(xt, yt, Tile.farmland, 0);
+                //                        return true;
+                //                    }
+                //                }
+            }
             return false;
 
         }
@@ -292,40 +301,31 @@ public abstract class Tile {
             int shape = (data / 16) % 2;
             int flowerCol = Color.get(10, Room.GRASS_COLOR, 555, 440);
 
-            if (shape == 0) screen.render(x * 16 + 0, y * 16 + 0, 1 + 1 * 32, flowerCol, 0);
-            if (shape == 1) screen.render(x * 16 + 8, y * 16 + 0, 1 + 1 * 32, flowerCol, 0);
-            if (shape == 1) screen.render(x * 16 + 0, y * 16 + 8, 1 + 1 * 32, flowerCol, 0);
-            if (shape == 0) screen.render(x * 16 + 8, y * 16 + 8, 1 + 1 * 32, flowerCol, 0);
+            if (shape == 0) {
+                screen.render(x * 16 + 0, y * 16 + 0, 1 + 1 * 32, flowerCol, 0);
+            }
+            if (shape == 1) {
+                screen.render(x * 16 + 8, y * 16 + 0, 1 + 1 * 32, flowerCol, 0);
+            }
+            if (shape == 1) {
+                screen.render(x * 16 + 0, y * 16 + 8, 1 + 1 * 32, flowerCol, 0);
+            }
+            if (shape == 0) {
+                screen.render(x * 16 + 8, y * 16 + 8, 1 + 1 * 32, flowerCol, 0);
+            }
         }
 
-        public boolean interact(Room room, int x, int y, Entity.Human player, Entity.Item item, int attackDir) {
-//            if (item instanceof ToolItem) {
-//                ToolItem tool = (ToolItem) item;
-//                if (tool.type == ToolType.shovel) {
-//                    if (player.payStamina(4 - tool.level)) {
-//                        room.add(new ItemEntity(level.sound, player.handler, player.property, new ResourceItem(Resource.flower), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
-//                        room.add(new ItemEntity(level.sound, player.handler, player.property, new ResourceItem(Resource.flower), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
-//                        room.setTile(x, y, Tile.grass, 0);
-//                        return true;
-//                    }
-//                }
-//            }
+        public boolean interact(Room room, int x, int y, Human player, Item item, int attackDir) {
             return false;
         }
 
-        public void hurt(Room room, int x, int y, Entity.Dynamic source, int dmg, int attackDir) {
-//            int count = random.nextInt(2) + 1;
-//            for (int i = 0; i < count; i++) {
-//                level.add(new ItemEntity(level.sound,
-//                    level.playerHandler(), level.propertyReader(),
-//                    new ResourceItem(Resource.flower), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
-//            }
+        public void hurt(Room room, int x, int y, Dynamic source, int dmg, int attackDir) {
             room.setTile(x, y, Tile.GRASS, 0);
         }
     }
 
     private static final class WaterTile extends Tile {
-        private Random wRandom = new Random();
+        private final Random random = new Random();
 
         public WaterTile(int id) {
             super(id);
@@ -334,7 +334,6 @@ public abstract class Tile {
         }
 
         public void render(Screen screen, Room room, int x, int y) {
-//            wRandom.setSeed((tickCount + (x / 2 - y) * 4311) / 10 * 54687121l + x * 3271612l + y * 3412987161l);
             int col = Color.get(005, 005, 115, 115);
             int transitionColor1 = Color.get(3, 005, Room.DIRT_COLOR - 111, Room.DIRT_COLOR);
             int transitionColor2 = Color.get(3, 005, Room.GRASS_COLOR - 110, Room.GRASS_COLOR);
@@ -350,23 +349,31 @@ public abstract class Tile {
             boolean sr = r && room.getTile(x + 1, y).connectsToSand;
 
             if (!u && !l) {
-                screen.render(x * 16 + 0, y * 16 + 0, wRandom.nextInt(4), col, wRandom.nextInt(4));
-            } else
-                screen.render(x * 16 + 0, y * 16 + 0, (l ? 14 : 15) + (u ? 0 : 1) * 32, (su || sl) ? transitionColor2 : transitionColor1, 0);
+                screen.render(x * 16 + 0, y * 16 + 0, random.nextInt(4), col, random.nextInt(4));
+            } else {
+                screen.render(x * 16 + 0, y * 16 + 0, (l ? 14 : 15) + (u ? 0 : 1) * 32,
+                    (su || sl) ? transitionColor2 : transitionColor1, 0);
+            }
 
             if (!u && !r) {
-                screen.render(x * 16 + 8, y * 16 + 0, wRandom.nextInt(4), col, wRandom.nextInt(4));
-            } else
-                screen.render(x * 16 + 8, y * 16 + 0, (r ? 16 : 15) + (u ? 0 : 1) * 32, (su || sr) ? transitionColor2 : transitionColor1, 0);
+                screen.render(x * 16 + 8, y * 16 + 0, random.nextInt(4), col, random.nextInt(4));
+            } else {
+                screen.render(x * 16 + 8, y * 16 + 0, (r ? 16 : 15) + (u ? 0 : 1) * 32,
+                    (su || sr) ? transitionColor2 : transitionColor1, 0);
+            }
 
             if (!d && !l) {
-                screen.render(x * 16 + 0, y * 16 + 8, wRandom.nextInt(4), col, wRandom.nextInt(4));
-            } else
-                screen.render(x * 16 + 0, y * 16 + 8, (l ? 14 : 15) + (d ? 2 : 1) * 32, (sd || sl) ? transitionColor2 : transitionColor1, 0);
+                screen.render(x * 16 + 0, y * 16 + 8, random.nextInt(4), col, random.nextInt(4));
+            } else {
+                screen.render(x * 16 + 0, y * 16 + 8, (l ? 14 : 15) + (d ? 2 : 1) * 32,
+                    (sd || sl) ? transitionColor2 : transitionColor1, 0);
+            }
             if (!d && !r) {
-                screen.render(x * 16 + 8, y * 16 + 8, wRandom.nextInt(4), col, wRandom.nextInt(4));
-            } else
-                screen.render(x * 16 + 8, y * 16 + 8, (r ? 16 : 15) + (d ? 2 : 1) * 32, (sd || sr) ? transitionColor2 : transitionColor1, 0);
+                screen.render(x * 16 + 8, y * 16 + 8, random.nextInt(4), col, random.nextInt(4));
+            } else {
+                screen.render(x * 16 + 8, y * 16 + 8, (r ? 16 : 15) + (d ? 2 : 1) * 32,
+                    (sd || sr) ? transitionColor2 : transitionColor1, 0);
+            }
         }
 
         public boolean mayPass(Room room, int x, int y, Entity e) {

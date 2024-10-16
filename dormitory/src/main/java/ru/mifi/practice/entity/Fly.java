@@ -4,10 +4,10 @@ import ru.mifi.practice.room.Room;
 import ru.mifi.practice.ui.Color;
 import ru.mifi.practice.ui.Screen;
 
-final class Fly extends AbstractDynamicEntity implements Entity.Bug {
+final class Fly extends AbstractDynamicEntity implements Bug {
+    private static final float SPEED = 0.05f;
+    private static final float FRICTION = 0.98f;
     private final Room room;
-    private final float speed = 0.05f;
-    private final float friction = 0.98f;
     private Vector p = new Vector(0, 0);
     private Vector s = new Vector(0, 0);
     private Vector f = new Vector(0, 0);
@@ -22,7 +22,7 @@ final class Fly extends AbstractDynamicEntity implements Entity.Bug {
     public void tick() {
         Human player = room.player();
         int radius = player.getLightRadius() * 2;
-        flying(radius, player.x(), player.y());
+        flying(radius, player.getX(), player.getY());
     }
 
     @Override
@@ -41,9 +41,9 @@ final class Fly extends AbstractDynamicEntity implements Entity.Bug {
         if (random.nextFloat() < 0.2f) {
             Vector center = new Vector(x, y);
             Vector v = new Vector(random.nextFloat() - 0.5f, random.nextFloat() - 0.5f);
-            f = center.subtract(p).multiply(0.5f / radius).add(v).normalize().multiply(speed);
+            f = center.subtract(p).multiply(0.5f / radius).add(v).normalize().multiply(SPEED);
         }
-        s = s.add(f).multiply(friction);
+        s = s.add(f).multiply(FRICTION);
         p = p.add(s);
 
         this.x = (int) p.x;

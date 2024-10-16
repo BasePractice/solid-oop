@@ -6,7 +6,9 @@ public interface Color {
     }
 
     static int get(int d) {
-        if (d < 0) return 255;
+        if (d < 0) {
+            return 255;
+        }
         int r = d / 100 % 10;
         int g = d / 10 % 10;
         int b = d % 10;

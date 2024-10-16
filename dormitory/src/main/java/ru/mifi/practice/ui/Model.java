@@ -1,11 +1,15 @@
 package ru.mifi.practice.ui;
 
-import ru.mifi.practice.entity.Entity;
+import ru.mifi.practice.entity.Human;
 import ru.mifi.practice.room.Room;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import javax.swing.WindowConstants;
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -196,7 +200,7 @@ public interface Model {
             } else {
                 input.tick();
                 room.tick();
-                Entity.Human player = room != null ? room.player() : null;
+                Human player = room != null ? room.player() : null;
                 if (player != null) {
                     gameTime++;
                     player.tick();
@@ -219,10 +223,10 @@ public interface Model {
                 return;
             }
 
-            Entity.Human player = room.player();
+            Human player = room.player();
             if (player != null && room.canRender()) {
-                int xScroll = player.x() - screen.width() / 2;
-                int yScroll = player.y() - (screen.height() - 8) / 2;
+                int xScroll = player.getX() - screen.width() / 2;
+                int yScroll = player.getY() - (screen.height() - 8) / 2;
                 if (xScroll < 16) {
                     xScroll = 16;
                 }
@@ -270,10 +274,10 @@ public interface Model {
                     msg = String.format("MAP: %5s", room.name());
                     font.draw(msg, (width() - 8) - msg.length() * 8, yNext, Color.get(-1, 550, 550, 550));
                     yNext += 8;
-                    msg = String.format("X  : %5d", player.x());
+                    msg = String.format("X  : %5d", player.getX());
                     font.draw(msg, (width() - 8) - msg.length() * 8, yNext, Color.get(-1, 550, 550, 550));
                     yNext += 8;
-                    msg = String.format("Y  : %5d", player.y());
+                    msg = String.format("Y  : %5d", player.getY());
                     font.draw(msg, (width() - 8) - msg.length() * 8, yNext, Color.get(-1, 550, 550, 550));
                     yNext += 8;
                     msg = String.format("STATE: %5s", player.state());
@@ -323,7 +327,7 @@ public interface Model {
                 }
             }
 
-            Entity.Human player = room != null ? room.player() : null;
+            Human player = room != null ? room.player() : null;
             if (player != null) {
                 for (int i = 0; i < 10; i++) {
                     if (i < player.health()) {
@@ -357,7 +361,7 @@ public interface Model {
             int xx = (width() - msg.length() * 8) / 2;
             int yy = (height() - 8) / 2;
             int w = msg.length();
-            int h = 1;
+
 
             screen.render(xx - 8, yy - 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
             screen.render(xx + w * 8, yy - 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 1);
@@ -367,6 +371,7 @@ public interface Model {
                 screen.render(xx + x * 8, yy - 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
                 screen.render(xx + x * 8, yy + 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
             }
+            int h = 1;
             for (int y = 0; y < h; y++) {
                 screen.render(xx - 8, yy + y * 8, 2 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
                 screen.render(xx + w * 8, yy + y * 8, 2 + 13 * 32, Color.get(-1, 1, 5, 445), 1);

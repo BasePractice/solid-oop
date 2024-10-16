@@ -1,6 +1,6 @@
 package ru.mifi.practice.ui;
 
-import java.awt.*;
+import java.awt.Point;
 
 public interface Font {
 
@@ -12,9 +12,9 @@ public interface Font {
 
     final class Default implements Font {
         private static final String CHARS =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ*     " +
-                "0123456789.,!?'\"-+=/\\%()<>:;[] " +
-                "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ*     "
+                + "0123456789.,!?'\"-+=/\\%()<>:;[] "
+                + "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
         private final Screen screen;
 
         public Default(Screen screen) {
@@ -34,8 +34,9 @@ public interface Font {
                 for (int i = 0; i < count; ++i) {
                     offset = i * wCount;
                     int offsetEnd = wCount;
-                    if (offset + offsetEnd > msg.length())
+                    if (offset + offsetEnd > msg.length()) {
                         offsetEnd = msg.length();
+                    }
                     String partText = msg.substring(offset, offset + offsetEnd);
                     draw(partText, x, y, col);
                     y += 8;
@@ -66,24 +67,25 @@ public interface Font {
         public void renderFrame(String title, int x0, int y0, int x1, int y1) {
             for (int y = y0; y <= y1; y++) {
                 for (int x = x0; x <= x1; x++) {
-                    if (x == x0 && y == y0)
+                    if (x == x0 && y == y0) {
                         screen.render(x * 8, y * 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
-                    else if (x == x1 && y == y0)
+                    } else if (x == x1 && y == y0) {
                         screen.render(x * 8, y * 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 1);
-                    else if (x == x0 && y == y1)
+                    } else if (x == x0 && y == y1) {
                         screen.render(x * 8, y * 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
-                    else if (x == x1 && y == y1)
+                    } else if (x == x1 && y == y1) {
                         screen.render(x * 8, y * 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 3);
-                    else if (y == y0)
+                    } else if (y == y0) {
                         screen.render(x * 8, y * 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
-                    else if (y == y1)
+                    } else if (y == y1) {
                         screen.render(x * 8, y * 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
-                    else if (x == x0)
+                    } else if (x == x0) {
                         screen.render(x * 8, y * 8, 2 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
-                    else if (x == x1)
+                    } else if (x == x1) {
                         screen.render(x * 8, y * 8, 2 + 13 * 32, Color.get(-1, 1, 5, 445), 1);
-                    else
+                    } else {
                         screen.render(x * 8, y * 8, 2 + 13 * 32, Color.get(5, 5, 5, 5), 1);
+                    }
                 }
             }
             draw(title, x0 * 8 + 8, y0 * 8, Color.get(5, 5, 5, 550));

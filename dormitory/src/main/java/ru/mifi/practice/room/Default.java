@@ -1,7 +1,9 @@
 package ru.mifi.practice.room;
 
+import ru.mifi.practice.entity.Dynamic;
 import ru.mifi.practice.entity.Entity;
 import ru.mifi.practice.entity.EntityFactory;
+import ru.mifi.practice.entity.Human;
 import ru.mifi.practice.ui.Handler;
 import ru.mifi.practice.ui.Screen;
 import ru.mifi.practice.ui.Tile;
@@ -9,12 +11,13 @@ import ru.mifi.practice.ui.Tile;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 final class Default implements Room {
-    private final Entity.Human player;
+    private final Human player;
     private final Buffer[] buffers;
     private final String name;
     private final int width;
@@ -58,7 +61,9 @@ final class Default implements Room {
         int yt1 = (y1 >> 4) + 1;
         for (int y = yt0; y <= yt1; y++) {
             for (int x = xt0; x <= xt1; x++) {
-                if (x < 0 || y < 0 || x >= w || y >= h) continue;
+                if (x < 0 || y < 0 || x >= w || y >= h) {
+                    continue;
+                }
                 Set<Entity> entities = entitiesInTiles[x + y * w];
                 for (Entity e : entities) {
                     if (e.intersects(x0, y0, x1, y1)) {
@@ -71,7 +76,12 @@ final class Default implements Room {
     }
 
     @Override
-    public Entity.Human player() {
+    public Set<Entity> getEntities(int x0, int y0, int x1, int y1) {
+        return getEntities(entitiesInTiles, width, height, x0, y0, x1, y1);
+    }
+
+    @Override
+    public Human player() {
         return player;
     }
 
@@ -121,14 +131,18 @@ final class Default implements Room {
     }
 
     void updateData(int x, int y, int value) {
-        if (x < 0 || y < 0 || x >= width || y >= height) return;
+        if (x < 0 || y < 0 || x >= width || y >= height) {
+            return;
+        }
         buffers[swapBuffer].datas[x + y * width] = (byte) value;
     }
 
     void updateRemoveEntity(Entity entity) {
-        int x = entity.x() >> 4;
-        int y = entity.y() >> 4;
-        if (x < 0 || y < 0 || x >= width || y >= height) return;
+        int x = entity.getX() >> 4;
+        int y = entity.getY() >> 4;
+        if (x < 0 || y < 0 || x >= width || y >= height) {
+            return;
+        }
         Entity.Data data = removeEntity(entity);
         if (data != null) {
             buffers[swapBuffer].entitiesInTiles[data.index()].remove(entity);
@@ -136,19 +150,18 @@ final class Default implements Room {
     }
 
     void updateInsertEntity(Entity entity) {
-//                entity.removed = false;
-//                entity.init(this);
+        int x = entity.getX() >> 4;
+        int y = entity.getY() >> 4;
 
-        int x = entity.x() >> 4;
-        int y = entity.y() >> 4;
-
-        if (x < 0 || y < 0 || x >= width || y >= height)
+        if (x < 0 || y < 0 || x >= width || y >= height) {
             return;
+        }
         int index = x + y * width;
         putEntity(entity, index);
         buffers[swapBuffer].entitiesInTiles[index].add(entity);
     }
 
+    @SuppressWarnings("ParameterName")
     @Override
     public void renderBackground(Screen screen, int xScroll, int yScroll) {
         xo = xScroll >> 4;
@@ -189,7 +202,7 @@ final class Default implements Room {
         screen.setOffset(0, 0);
     }
 
-    private void sortAndRender(Screen screen, ArrayList<Entity> rowSprites) {
+    private void sortAndRender(Screen screen, List<Entity> rowSprites) {
         rowSprites.forEach(p -> p.render(screen));
     }
 
@@ -212,7 +225,7 @@ final class Default implements Room {
                     // e.render(screen);
                     int lr = e.getLightRadius();
                     if (lr > 0) {
-                        screen.renderLight(e.x() - 1, e.y() - 4, lr * 8);
+                        screen.renderLight(e.getX() - 1, e.getY() - 4, lr * 8);
                     }
                 }
                 int lr = getTile(x, y).getLightRadius(this, x, y);
@@ -230,38 +243,30 @@ final class Default implements Room {
     }
 
     @Override
-    public Set<Entity> getEntities(int x0, int y0, int x1, int y1) {
-        return getEntities(entitiesInTiles, width, height, x0, y0, x1, y1);
-    }
-
-    @Override
     public void tick() {
         for (Entity.Data e : new HashMap<>(entities).values()) {
-            if (e.entity() instanceof Entity.Dynamic entity) {
-                int xto = entity.x() >> 4;
-                int yto = entity.y() >> 4;
-                int rxo = entity.x();
-                int ryo = entity.y();
+            if (e.entity() instanceof Dynamic entity) {
+                int xto = entity.getX() >> 4;
+                int yto = entity.getY() >> 4;
+                int rxo = entity.getX();
+                int ryo = entity.getY();
 
                 entity.tick();
                 if (entity.isRemoved()) {
-//                    remove(entity);
+                    //remove(entity);
                     entities.remove(entity.id());
                     removeEntity(xto, yto, entity);
                     System.out.println("Removed: " + entity.getClass().getSimpleName());
-//                    if (entity instanceof DynamicObjects.Player && ((Player) e.entity).die) {
-//                        //
-//                    }
                 } else {
-                    int xt = entity.x() >> 4;
-                    int yt = entity.y() >> 4;
-                    int rx = entity.x();
-                    int ry = entity.y();
+                    int xt = entity.getX() >> 4;
+                    int yt = entity.getY() >> 4;
+                    int rx = entity.getX();
+                    int ry = entity.getY();
 
                     if (xto != xt || yto != yt) {
                         removeEntity(xto, yto, entity);
                         insertEntity(xt, yt, entity);
-                    } else if ((rx != rxo || ry != ryo)) {
+                    } else if (rx != rxo || ry != ryo) {
                         removeEntity(xto, yto, entity);
                         insertEntity(xt, yt, entity);
                     }
@@ -276,8 +281,7 @@ final class Default implements Room {
             return Tile.ROCK;
         }
         byte id = tiles[x + y * width];
-        Tile tile = Tile.TILES[id];
-        return tile;
+        return Tile.TILES[id];
     }
 
     @Override
@@ -315,27 +319,28 @@ final class Default implements Room {
     }
 
     public void add(Entity entity) {
-//        entity.removed = false;
-//        entity.init(this);
-        insertEntity(entity.x() >> 4, entity.y() >> 4, entity);
+        insertEntity(entity.getX() >> 4, entity.getY() >> 4, entity);
     }
 
     public void remove(Entity e) {
-        int xto = e.x() >> 4;
-        int yto = e.y() >> 4;
+        int xto = e.getX() >> 4;
+        int yto = e.getY() >> 4;
         removeEntity(xto, yto, e);
     }
 
     public void insertEntity(int x, int y, Entity e) {
-        if (x < 0 || y < 0 || x >= width() || y >= height)
+        if (x < 0 || y < 0 || x >= width() || y >= height) {
             return;
+        }
         int index = x + y * width;
         putEntity(e, index);
         entitiesInTiles[index].add(e);
     }
 
     public void removeEntity(int x, int y, Entity e) {
-        if (x < 0 || y < 0 || x >= width || y >= height) return;
+        if (x < 0 || y < 0 || x >= width || y >= height) {
+            return;
+        }
         int i = x + y * width;
         Entity.Data data = removeEntity(e);
         if (data != null) {

@@ -121,7 +121,6 @@ public interface Screen {
             int x0 = x - r;
             int x1 = x + r;
             int y0 = y - r;
-            int y1 = y + r;
 
             if (x0 < 0) {
                 x0 = 0;
@@ -132,6 +131,7 @@ public interface Screen {
             if (x1 > width) {
                 x1 = width;
             }
+            int y1 = y + r;
             if (y1 > height) {
                 y1 = height;
             }

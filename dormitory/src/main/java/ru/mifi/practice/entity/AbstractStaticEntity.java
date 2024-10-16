@@ -3,7 +3,7 @@ package ru.mifi.practice.entity;
 import java.util.Random;
 import java.util.UUID;
 
-abstract class AbstractStaticEntity implements Entity.Static {
+abstract class AbstractStaticEntity implements Static {
     protected final Random random = new Random();
     protected final int x;
     protected final int y;
@@ -24,17 +24,17 @@ abstract class AbstractStaticEntity implements Entity.Static {
     }
 
     @Override
-    public int x() {
+    public int getX() {
         return x;
     }
 
     @Override
-    public int y() {
+    public int getY() {
         return y;
     }
 
     @Override
-    public int z() {
+    public int getZ() {
         return z;
     }
 

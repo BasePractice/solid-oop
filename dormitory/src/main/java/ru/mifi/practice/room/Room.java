@@ -2,6 +2,7 @@ package ru.mifi.practice.room;
 
 import ru.mifi.practice.entity.Entity;
 import ru.mifi.practice.entity.EntityFactory;
+import ru.mifi.practice.entity.Human;
 import ru.mifi.practice.ui.Handler;
 import ru.mifi.practice.ui.Screen;
 import ru.mifi.practice.ui.Tile;
@@ -24,7 +25,7 @@ public interface Room {
     Factory DEFAULT_FACTORY = (name, input) ->
         new Default("r00m", input, 24, 24, DEFAULT_GENERATOR, EntityFactory.DEFAULT);
 
-    Entity.Human player();
+    Human player();
 
     boolean canRender();
 

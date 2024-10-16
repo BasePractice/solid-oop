@@ -5,7 +5,7 @@ import ru.mifi.practice.ui.Handler;
 
 final class DefaultEntityFactory implements EntityFactory {
     @Override
-    public Entity.Human createPlayer(Handler input, Room root) {
+    public Human createPlayer(Handler input, Room root) {
         return new Player(input, root);
     }
 

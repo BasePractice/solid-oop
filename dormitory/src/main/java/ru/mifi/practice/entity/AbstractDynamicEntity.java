@@ -2,12 +2,12 @@ package ru.mifi.practice.entity;
 
 import ru.mifi.practice.room.Room;
 
-import java.awt.*;
+import java.awt.Point;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
-abstract class AbstractDynamicEntity implements Entity.Dynamic {
+abstract class AbstractDynamicEntity implements Dynamic {
     protected final Random random = new Random();
     private final UUID id;
     protected int xr = 6;
@@ -27,17 +27,17 @@ abstract class AbstractDynamicEntity implements Entity.Dynamic {
     }
 
     @Override
-    public int x() {
+    public int getX() {
         return x;
     }
 
     @Override
-    public int y() {
+    public int getY() {
         return y;
     }
 
     @Override
-    public int z() {
+    public int getZ() {
         return z;
     }
 
@@ -62,13 +62,13 @@ abstract class AbstractDynamicEntity implements Entity.Dynamic {
     }
 
     @Override
-    public Point move() {
-        return new Point(0, 0);
+    public int health() {
+        return health;
     }
 
     @Override
-    public int health() {
-        return health;
+    public Point move() {
+        return new Point(0, 0);
     }
 
     public boolean move(Room room, int xa, int ya) {
@@ -91,27 +91,32 @@ abstract class AbstractDynamicEntity implements Entity.Dynamic {
     }
 
     protected boolean move2(Room room, int xa, int ya) {
-        if (xa != 0 && ya != 0) throw new IllegalArgumentException("Move2 can only move along one axis at a time!");
+        if (xa != 0 && ya != 0) {
+            throw new IllegalArgumentException("Move2 can only move along one axis at a time!");
+        }
 
-        int xto0 = ((x) - xr) >> 4;
-        int yto0 = ((y) - yr) >> 4;
-        int xto1 = ((x) + xr) >> 4;
-        int yto1 = ((y) + yr) >> 4;
+        int xto0 = (x - xr) >> 4;
+        int yto0 = (y - yr) >> 4;
+        int xto1 = (x + xr) >> 4;
+        int yto1 = (y + yr) >> 4;
 
-        int xt0 = ((x + xa) - xr) >> 4;
-        int yt0 = ((y + ya) - yr) >> 4;
-        int xt1 = ((x + xa) + xr) >> 4;
-        int yt1 = ((y + ya) + yr) >> 4;
+        int xt0 = (x + xa - xr) >> 4;
+        int yt0 = (y + ya - yr) >> 4;
+        int xt1 = (x + xa + xr) >> 4;
+        int yt1 = (y + ya + yr) >> 4;
         boolean blocked = false;
-        for (int yt = yt0; yt <= yt1; yt++)
+        for (int yt = yt0; yt <= yt1; yt++) {
             for (int xt = xt0; xt <= xt1; xt++) {
-                if (xt >= xto0 && xt <= xto1 && yt >= yto0 && yt <= yto1) continue;
+                if (xt >= xto0 && xt <= xto1 && yt >= yto0 && yt <= yto1) {
+                    continue;
+                }
                 room.getTile(xt, yt).bumpedInto(room, xt, yt, this);
                 if (!room.getTile(xt, yt).mayPass(room, xt, yt, this)) {
                     blocked = true;
-                    return false;
+                    break;
                 }
             }
+        }
         if (blocked) {
             return false;
         }
