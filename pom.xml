@@ -27,7 +27,7 @@
     </scm>
 
     <modules>
-        <module>dormitory</module>
+        <module>vol3</module>
     </modules>
 
     <dependencyManagement>
