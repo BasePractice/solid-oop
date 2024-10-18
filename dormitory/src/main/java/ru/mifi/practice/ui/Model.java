@@ -47,7 +47,7 @@ public interface Model {
         private Font font;
         private int tickCount = 0;
         private int gameTime = 0;
-        private int lightning = 3;
+        private int lightning = 2;
         private int playerDeadTime;
         private int wonTimer = 0;
         private boolean hasWon = false;
@@ -56,7 +56,7 @@ public interface Model {
         private int drawableTicks = 0;
         private int distance;
         private boolean fastQuit = false;
-        private Room room;
+        private final Room room;
 
         private Default(boolean development) {
             selfUpdate();

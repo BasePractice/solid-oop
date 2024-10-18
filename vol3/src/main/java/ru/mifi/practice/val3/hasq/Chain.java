@@ -1,161 +1,135 @@
 package ru.mifi.practice.val3.hasq;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.HexFormat;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-
 public interface Chain {
-
-    public static void main(String[] args) throws IOException {
-        newChain(new Token("1000000000"), "init")
-            .add("init", "Next")
-            .add("init", "Next")
-            .add("init", "Next")
-            .write(Path.of("1000000000.csv"));
-    }
-
     static Chain newChain(Token token, String passphrase) {
-        return new Default(token).add(passphrase, "Created");
+        return new Default(token, passphrase);
     }
 
-    Chain write(Path path) throws IOException;
+    static Chain newChain(Record root) {
+        return new Default(root);
+    }
 
-    Chain add(String passphrase, String note);
+    default Chain add(String passphrase, String note) {
+        Key key = nextKey(passphrase);
+        return add(key, note);
+    }
+
+    Chain add(Key key, String note);
+
+    Record root();
+
+    Key nextKey(String passphrase);
+
+    Result<ValidateType, Detailed> validate();
+
+    enum ValidateType {
+        SUCCESS,
+        FAILURE,
+        NOT_STARTED,
+        NOT_COMPLETE
+    }
 
     interface Value {
         String value();
     }
 
+    record Detailed(Record record) {
+
+    }
+
     final class Default implements Chain {
-        private final List<Record> lines = new ArrayList<>();
+        private final Record root;
         private final Token token;
+        private Record current;
 
-        Default(Token token) {
+        Default(Token token, String passphrase) {
             this.token = token;
+            this.root = Record.root(token, passphrase);
+            this.current = root;
+        }
+
+        Default(Record root) {
+            this.root = root;
+            this.token = root.token();
+            this.current = root;
         }
 
         @Override
-        public Chain add(String passphrase, String note) {
-            if (lines.isEmpty()) {
-                Key key = createKey(0, passphrase);
-                lines.add(new Record(0, token, key, note));
-            } else {
-                Record line = lines.get(lines.size() - 1);
-                int id = line.id + 1;
-                Key key = createKey(id, passphrase);
-                Generator generator = createGenerator(line.id, key);
-                line.generator = generator;
-                lines.add(new Record(id, token, key, note));
-                if (lines.size() > 2) {
-                    line = lines.get(lines.size() - 3);
-                    line.owner = createOwner(line.id, generator);
-                }
-            }
+        public Record root() {
+            return root;
+        }
+
+        @Override
+        public Chain add(Key key, String note) {
+            Generator generator = key.generator(current.id);
+            current.setGenerator(generator);
+            current = current.newRecord(key, note);
             return this;
         }
 
-        public Chain write(Path path) throws IOException {
-            Files.write(path, lines.stream().map(Record::toString).toList(), StandardOpenOption.CREATE_NEW);
-            return this;
+        @Override
+        public Key nextKey(String passphrase) {
+            return token.key(current.id + 1, passphrase);
         }
 
-        public void read(Path path) throws IOException {
-            Files.readAllLines(path).forEach(line -> {
-                String[] parts = line.split(";");
-                lines.add(Record.from(parts));
-            });
-        }
-
-        private Key createKey(int id, String passphrase) {
-            return new Key(id, Utils.hash(String.valueOf(id), token.value(), passphrase));
-        }
-
-        private Generator createGenerator(int id, Key key) {
-            return new Generator(id, Utils.hash(String.valueOf(id), token.value(), key.value()));
-        }
-
-        private Owner createOwner(int id, Generator generator) {
-            return new Owner(id, Utils.hash(String.valueOf(id), token.value(), generator.value()));
-        }
-    }
-
-    final class Record {
-        private final int id;
-        private final Token token;
-        private final Key key;
-        private final String note;
-        private Generator generator;
-        private Owner owner;
-
-        private Record(int id, Token token, Key key, String note) {
-            this(id, token, key, note, null, null);
-        }
-
-        public Record(int id, Token token, Key key, String note, Generator generator, Owner owner) {
-            this.id = id;
-            this.token = token;
-            this.key = key;
-            this.note = note;
-            this.generator = generator;
-            this.owner = owner;
-        }
-
-        private static Record from(String[] parts) {
-            int id = Integer.parseInt(parts[0]);
-            if (parts.length == 6) {
-                return new Record(
-                    id,
-                    new Token(parts[1]),
-                    new Key(id, parts[2]),
-                    parts[5],
-                    new Generator(id, parts[3]),
-                    new Owner(id, parts[4])
-                );
-            } else {
-                return new Record(
-                    id,
-                    new Token(parts[1]),
-                    new Key(id, parts[2]),
-                    parts[5]
-                );
+        @Override
+        public Result<ValidateType, Detailed> validate() {
+            if (root == null) {
+                return Result.ok(ValidateType.NOT_STARTED);
+            }
+            try {
+                return root.validate();
+            } catch (Exception ex) {
+                return Result.failure(null, ex.getMessage());
             }
         }
-
-        @Override
-        public String toString() {
-            return String.format("%05d;%s;%s;%s;%s;%s",
-                id, token.value(), key.value(),
-                Objects.requireNonNullElse(generator, ""),
-                Objects.requireNonNullElse(owner, ""),
-                note);
-        }
     }
 
-    record Key(int id, String value) implements Value {
+    record Key(int id, Token token, String value) implements Value, Hash {
         @Override
         public String toString() {
             return value;
         }
+
+        public Generator generator(int id) {
+            return new Generator(id, this, hash(String.valueOf(this.id), token.value, value));
+        }
+
+        @Override
+        public String hash(Object... args) {
+            return token.hash(args);
+        }
     }
 
-    record Generator(int id, String value) implements Value {
+    record Generator(int id, Key key, String value) implements Value, Hash {
         @Override
         public String toString() {
             return value;
         }
+
+        public Owner owner(int id) {
+            return new Owner(id, hash(String.valueOf(key.id), key.token.value, key.value, value));
+        }
+
+        @Override
+        public String hash(Object... args) {
+            return key.hash(args);
+        }
     }
 
-    record Token(String value) implements Value {
+    record Token(String value, Hash hash) implements Value, Hash {
         @Override
         public String toString() {
             return value;
+        }
+
+        public Key key(int n, String passphrase) {
+            return new Key(n, this, hash(String.valueOf(n), value(), passphrase));
+        }
+
+        @Override
+        public String hash(Object... args) {
+            return hash.hash(args);
         }
     }
 
@@ -163,24 +137,6 @@ public interface Chain {
         @Override
         public String toString() {
             return value;
-        }
-    }
-
-    final class Utils {
-        private Utils() {
-        }
-
-        private static String hash(Object... objects) {
-            try {
-                MessageDigest digest = MessageDigest.getInstance("MD5");
-                for (Object object : objects) {
-                    digest.update(object.toString().getBytes());
-                }
-                byte[] bytes = digest.digest();
-                return HexFormat.of().formatHex(bytes).toUpperCase(Locale.ROOT);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
         }
     }
 }
