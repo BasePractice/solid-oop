@@ -1,6 +1,6 @@
-package ru.mifi.practice.val3;
+package ru.mifi.practice.val3.bank;
 
-import static ru.mifi.practice.val3.Currency.Converter;
+import static ru.mifi.practice.val3.bank.Currency.Converter;
 
 public interface Amount {
 

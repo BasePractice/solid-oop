@@ -1,4 +1,4 @@
-package ru.mifi.practice.val3;
+package ru.mifi.practice.val3.bank;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,10 +26,6 @@ public sealed interface Bank extends Currency.Converter {
             return new ArrayList<>(banks.values());
         }
 
-        private void register(Bank bank) {
-            this.banks.put(bank.getName(), bank);
-        }
-
         @Override
         public Amount convert(Amount amount, Currency to) {
             if (amount.currency().equals(to)) {
@@ -46,7 +42,7 @@ public sealed interface Bank extends Currency.Converter {
 
         Sber(Up up) {
             this.up = up;
-            up.register(this);
+            up.banks.put(getName(), this);
         }
 
         @Override

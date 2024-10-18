@@ -1,4 +1,4 @@
-package ru.mifi.practice.val3;
+package ru.mifi.practice.val3.bank;
 
 import java.util.Locale;
 
