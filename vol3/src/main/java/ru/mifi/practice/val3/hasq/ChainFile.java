@@ -31,6 +31,6 @@ public abstract class ChainFile {
                 prev.setNext(current);
             }
         }
-        return Chain.newChain(root);
+        return Chain.loadChain(root);
     }
 }

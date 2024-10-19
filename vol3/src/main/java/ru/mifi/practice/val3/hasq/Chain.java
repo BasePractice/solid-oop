@@ -5,7 +5,7 @@ public interface Chain {
         return new Default(token, passphrase);
     }
 
-    static Chain newChain(Record root) {
+    static Chain loadChain(Record root) {
         return new Default(root);
     }
 
