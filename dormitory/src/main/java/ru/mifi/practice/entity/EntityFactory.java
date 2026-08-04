@@ -13,6 +13,8 @@ public interface EntityFactory {
 
     Human createPlayer(Handler input, Room root);
 
+    Inventory createInventory();
+
     Entity createCube(int x, int y, int z, int side);
 
     Entity createFly(int x, int y, int z, Room room);

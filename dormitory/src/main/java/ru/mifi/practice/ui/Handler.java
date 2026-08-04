@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 
 /**
  * Клавиатура. Каждая клавиша помнит не только «нажата ли она сейчас», но и число
@@ -13,9 +14,11 @@ import java.util.Map;
  * одно нажатие сработало бы десятки раз подряд.
  *
  * <p>Раскладка задана таблицей, а не цепочкой сравнений: на одно действие приходится
- * несколько клавиш, и добавить ещё одну — это добавить строчку.
+ * несколько клавиш, и добавить ещё одну — это добавить строчку. Цифры отведены под
+ * слоты инвентаря.
  */
 public final class Handler implements KeyListener {
+    private static final int SLOTS = 9;
     private final List<Key> keys = new ArrayList<>();
     public final Key up = new Key(keys);
     public final Key down = new Key(keys);
@@ -23,6 +26,7 @@ public final class Handler implements KeyListener {
     public final Key right = new Key(keys);
     public final Key attack = new Key(keys);
     public final Key menu = new Key(keys);
+    private final List<Key> slots = new ArrayList<>();
     private final Map<Integer, Key> layout = new HashMap<>();
 
     public Handler(Model room) {
@@ -32,7 +36,25 @@ public final class Handler implements KeyListener {
         bind(right, KeyEvent.VK_D, KeyEvent.VK_RIGHT, KeyEvent.VK_NUMPAD6);
         bind(attack, KeyEvent.VK_SPACE, KeyEvent.VK_CONTROL, KeyEvent.VK_C, KeyEvent.VK_NUMPAD0);
         bind(menu, KeyEvent.VK_ENTER, KeyEvent.VK_TAB, KeyEvent.VK_X, KeyEvent.VK_ALT);
+        for (int i = 0; i < SLOTS; i++) {
+            Key slot = new Key(keys);
+            slots.add(slot);
+            bind(slot, KeyEvent.VK_1 + i);
+        }
         room.addHandler(this);
+    }
+
+    /**
+     * Номер слота, выбранного в этом такте, если по нему щёлкнули. Пусто —
+     * значит выбор не меняли.
+     */
+    public OptionalInt slot() {
+        for (int i = 0; i < slots.size(); i++) {
+            if (slots.get(i).clicked) {
+                return OptionalInt.of(i);
+            }
+        }
+        return OptionalInt.empty();
     }
 
     public void releaseAll() {

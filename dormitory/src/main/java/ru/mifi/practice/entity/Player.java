@@ -3,9 +3,10 @@ package ru.mifi.practice.entity;
 import ru.mifi.practice.room.Room;
 import ru.mifi.practice.ui.Handler;
 import ru.mifi.practice.ui.Screen;
+import ru.mifi.practice.ui.Tile;
 
 import java.awt.Point;
-import java.util.Set;
+import java.util.Optional;
 
 import static ru.mifi.practice.ui.Color.get;
 
@@ -18,10 +19,11 @@ import static ru.mifi.practice.ui.Color.get;
  */
 final class Player extends AbstractDynamicEntity implements Human {
     private static final int MAX_STAMINA = 10;
+    private static final int BARE_LIGHT = 2;
     private final Handler input;
     private final Room room;
+    private final Inventory inventory;
     private Item attackItem;
-    private Item activeItem;
     private int walkDist = 0;
     private int dir = 0;
     private int hurtTime = 0;
@@ -34,11 +36,17 @@ final class Player extends AbstractDynamicEntity implements Human {
     private int staminaRechargeDelay = 40;
     private State state = State.STAY;
 
-    Player(Handler input, Room room) {
+    Player(Handler input, Room room, Inventory inventory) {
         super(24, 24, 0, 1);
         this.input = input;
         this.room = room;
+        this.inventory = inventory;
         this.health = 10;
+    }
+
+    @Override
+    public Inventory inventory() {
+        return inventory;
     }
 
     @Override
@@ -143,7 +151,7 @@ final class Player extends AbstractDynamicEntity implements Human {
         }
 
         int yt = 14;
-        if (activeItem instanceof Item.FurnitureItem) {
+        if (inventory.active().orElse(null) instanceof Item.FurnitureItem) {
             yt += 2;
         }
         screen.render(xo + 8 * flip1, yo + 0, xt + yt * 32, col, flip1);
@@ -173,7 +181,7 @@ final class Player extends AbstractDynamicEntity implements Human {
             }
         }
 
-        if (activeItem instanceof Item.FurnitureItem furniture) {
+        if (inventory.active().orElse(null) instanceof Item.FurnitureItem furniture) {
             furniture.update(x, yo);
             furniture.render(screen);
         }
@@ -181,16 +189,7 @@ final class Player extends AbstractDynamicEntity implements Human {
 
     @Override
     public int getLightRadius() {
-        int r = 5;
-        if (activeItem != null) {
-            if (activeItem instanceof Item.LightItem item) {
-                int rr = item.getLightRadius();
-                if (rr > r) {
-                    r = rr;
-                }
-            }
-        }
-        return r;
+        return Math.max(BARE_LIGHT, inventory.active().map(Item::getLightRadius).orElse(0));
     }
 
     @Override
@@ -222,6 +221,7 @@ final class Player extends AbstractDynamicEntity implements Human {
             attack();
             state = State.ATCK;
         }
+        input.slot().ifPresent(inventory::select);
         if (input.isUsed()) {
             use();
         }
@@ -238,181 +238,109 @@ final class Player extends AbstractDynamicEntity implements Human {
     private void attack() {
         walkDist += 8;
         attackDir = dir;
-        attackItem = activeItem;
-        boolean done = false;
-
-        if (activeItem != null) {
-            attackTime = 10;
-            int yo = -2;
-            int range = 12;
-            if (dir == 0 && interact(x - 8, y + 4 + yo, x + 8, y + range + yo)) {
-                done = true;
-            }
-            if (dir == 1 && interact(x - 8, y - range + yo, x + 8, y - 4 + yo)) {
-                done = true;
-            }
-            if (dir == 3 && interact(x + 4, y - 8 + yo, x + range, y + 8 + yo)) {
-                done = true;
-            }
-            if (dir == 2 && interact(x - range, y - 8 + yo, x - 4, y + 8 + yo)) {
-                done = true;
-            }
-            if (done) {
-                return;
-            }
-
-            int xt = x >> 4;
-            int yt = (y + yo) >> 4;
-            int r = 12;
-            if (attackDir == 0) {
-                yt = (y + r + yo) >> 4;
-            }
-            if (attackDir == 1) {
-                yt = (y - r + yo) >> 4;
-            }
-            if (attackDir == 2) {
-                xt = (x - r) >> 4;
-            }
-            if (attackDir == 3) {
-                xt = (x + r) >> 4;
-            }
-
-            if (xt >= 0 && yt >= 0 && xt < room.width() && yt < room.height()) {
-                if (activeItem.interactOn(room.getTile(xt, yt), room, xt, yt, this, attackDir)) {
-                    done = true;
-                } else {
-                    if (room.getTile(xt, yt).interact(room, xt, yt, this, activeItem, attackDir)) {
-                        done = true;
-                    }
-                }
-                if (activeItem.isDepleted()) {
-                    activeItem = null;
-                }
-            }
-        }
-
-        if (done) {
+        Optional<Item> active = inventory.active();
+        attackItem = active.orElse(null);
+        if (active.isPresent() && interactWith(active.get())) {
             return;
         }
-
-        if (activeItem == null || activeItem.canAttack()) {
-            attackTime = 5;
-            int yo = -2;
-            int range = 20;
-            if (dir == 0) {
-                hurt(x - 8, y + 4 + yo, x + 8, y + range + yo);
-            }
-            if (dir == 1) {
-                hurt(x - 8, y - range + yo, x + 8, y - 4 + yo);
-            }
-            if (dir == 3) {
-                hurt(x + 4, y - 8 + yo, x + range, y + 8 + yo);
-            }
-            if (dir == 2) {
-                hurt(x - range, y - 8 + yo, x - 4, y + 8 + yo);
-            }
-
-            int xt = x >> 4;
-            int yt = (y + yo) >> 4;
-            int r = 12;
-            if (attackDir == 0) {
-                yt = (y + r + yo) >> 4;
-            }
-            if (attackDir == 1) {
-                yt = (y - r + yo) >> 4;
-            }
-            if (attackDir == 2) {
-                xt = (x - r) >> 4;
-            }
-            if (attackDir == 3) {
-                xt = (x + r) >> 4;
-            }
-
-            if (xt >= 0 && yt >= 0 && xt < room.width() && yt < room.height()) {
-                room.getTile(xt, yt).hurt(room, xt, yt, this, random.nextInt(3) + 1, attackDir);
-            }
+        if (active.isEmpty() || active.get().canAttack()) {
+            strike();
         }
-
     }
 
-    private boolean use(int x0, int y0, int x1, int y1) {
-        Set<Entity> entities = room.getEntities(x0, y0, x1, y1);
-        for (Entity e : entities) {
-            if (e != this) {
-                if (e.use(this, attackDir)) {
-                    return true;
-                }
-            }
+    private boolean interactWith(Item item) {
+        attackTime = 10;
+        Area area = area(12);
+        if (interact(area)) {
+            return true;
         }
-        return false;
+        Point tile = target();
+        if (!inside(tile)) {
+            return false;
+        }
+        Tile at = room.getTile(tile.x, tile.y);
+        return item.interactOn(at, room, tile.x, tile.y, this, attackDir)
+            || at.interact(room, tile.x, tile.y, this, item, attackDir);
+    }
+
+    private void strike() {
+        attackTime = 5;
+        hurt(area(20));
+        Point tile = target();
+        if (inside(tile)) {
+            room.getTile(tile.x, tile.y).hurt(room, tile.x, tile.y, this, random.nextInt(3) + 1, attackDir);
+        }
     }
 
     private boolean use() {
-        int yo = -2;
-        if (dir == 0 && use(x - 8, y + 4 + yo, x + 8, y + 12 + yo)) {
-            return true;
-        }
-        if (dir == 1 && use(x - 8, y - 12 + yo, x + 8, y - 4 + yo)) {
-            return true;
-        }
-        if (dir == 3 && use(x + 4, y - 8 + yo, x + 12, y + 8 + yo)) {
-            return true;
-        }
-        if (dir == 2 && use(x - 12, y - 8 + yo, x - 4, y + 8 + yo)) {
-            return true;
-        }
-
-        int xt = x >> 4;
-        int yt = (y + yo) >> 4;
-        int r = 12;
-        if (attackDir == 0) {
-            yt = (y + r + yo) >> 4;
-        }
-        if (attackDir == 1) {
-            yt = (y - r + yo) >> 4;
-        }
-        if (attackDir == 2) {
-            xt = (x - r) >> 4;
-        }
-        if (attackDir == 3) {
-            xt = (x + r) >> 4;
-        }
-
-        if (xt >= 0 && yt >= 0 && xt < room.width() && yt < room.height()) {
-            if (room.getTile(xt, yt).use(room, xt, yt, this, attackDir)) {
+        Area area = area(12);
+        for (Entity entity : room.getEntities(area.x0(), area.y0(), area.x1(), area.y1())) {
+            if (entity != this && entity.use(this, attackDir)) {
                 return true;
             }
         }
-
-        return false;
+        Point tile = target();
+        return inside(tile) && room.getTile(tile.x, tile.y).use(room, tile.x, tile.y, this, attackDir);
     }
 
-    private boolean interact(int x0, int y0, int x1, int y1) {
-        Set<Entity> entities = room.getEntities(x0, y0, x1, y1);
-        for (Entity e : entities) {
-            if (e != this) {
-                if (e.interact(this, activeItem, attackDir)) {
-                    return true;
-                }
+    private boolean interact(Area area) {
+        for (Entity entity : room.getEntities(area.x0(), area.y0(), area.x1(), area.y1())) {
+            if (entity != this && entity.interact(this, attackItem, attackDir)) {
+                return true;
             }
         }
         return false;
     }
 
-    private void hurt(int x0, int y0, int x1, int y1) {
-        Set<Entity> entities = room.getEntities(x0, y0, x1, y1);
-        for (Entity e : entities) {
-            if (e != this) {
-                e.hurt(this, getAttackDamage(e), attackDir);
+    private void hurt(Area area) {
+        for (Entity entity : room.getEntities(area.x0(), area.y0(), area.x1(), area.y1())) {
+            if (entity != this && reaches(entity)) {
+                entity.hurt(this, damage(entity), attackDir);
             }
         }
     }
 
-    private int getAttackDamage(Entity e) {
-        int dmg = random.nextInt(3) + 1;
-        if (attackItem != null) {
-            dmg += attackItem.getAttackDamageBonus(e);
-        }
-        return dmg;
+    private boolean reaches(Entity entity) {
+        return inventory.active()
+            .map(item -> item.reaches(entity))
+            .orElseGet(() -> !(entity instanceof Bug bug) || !bug.flying());
+    }
+
+    private int damage(Entity entity) {
+        return random.nextInt(3) + 1
+            + inventory.active().map(item -> item.getAttackDamageBonus(entity)).orElse(0);
+    }
+
+    private boolean inside(Point tile) {
+        return tile.x >= 0 && tile.y >= 0 && tile.x < room.width() && tile.y < room.height();
+    }
+
+    /**
+     * Прямоугольник перед игроком, в который попадает удар или применение предмета.
+     * Смещение вверх на два пикселя — рост персонажа: бьёт он не по земле у ног.
+     */
+    private Area area(int range) {
+        int yo = -2;
+        return switch (dir) {
+            case 0 -> new Area(x - 8, y + 4 + yo, x + 8, y + range + yo);
+            case 1 -> new Area(x - 8, y - range + yo, x + 8, y - 4 + yo);
+            case 2 -> new Area(x - range, y - 8 + yo, x - 4, y + 8 + yo);
+            default -> new Area(x + 4, y - 8 + yo, x + range, y + 8 + yo);
+        };
+    }
+
+    private Point target() {
+        int yo = -2;
+        int r = 12;
+        return switch (attackDir) {
+            case 0 -> new Point(x >> 4, (y + r + yo) >> 4);
+            case 1 -> new Point(x >> 4, (y - r + yo) >> 4);
+            case 2 -> new Point((x - r) >> 4, (y + yo) >> 4);
+            default -> new Point((x + r) >> 4, (y + yo) >> 4);
+        };
+    }
+
+    private record Area(int x0, int y0, int x1, int y1) {
+
     }
 }

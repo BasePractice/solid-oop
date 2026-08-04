@@ -9,14 +9,13 @@ import ru.mifi.practice.ui.Screen;
  * сумму направления на свет и случайного отклонения, — а дальше летит по инерции
  * с трением. Из-за отклонения траектория не сходится в точку, а вьётся вокруг неё.
  *
- * <p>Тапком муху почти не достать: удар засчитывается лишь в десятой части случаев,
- * для неё нужна мухобойка.
+ * <p>Тапком муху не достать вовсе — она в воздухе. Промах решается не здесь,
+ * а в самом предмете: за это отвечает {@code Item.reaches}.
  */
 final class Fly extends AbstractDynamicEntity implements Bug {
     private static final float SPEED = 0.05f;
     private static final float FRICTION = 0.98f;
     private static final float TURN = 0.2f;
-    private static final float HIT = 0.1f;
     private static final int HEALTH = 20;
     private final Room room;
     private Vector position;
@@ -33,7 +32,7 @@ final class Fly extends AbstractDynamicEntity implements Bug {
     @Override
     public void tick() {
         Human player = room.player();
-        flying(player.getLightRadius() * 2, player.getX(), player.getY());
+        wander(player.getLightRadius() * 2, player.getX(), player.getY());
     }
 
     @Override
@@ -42,13 +41,16 @@ final class Fly extends AbstractDynamicEntity implements Bug {
     }
 
     @Override
-    public void hurt(Human player, int attackDamage, int attackDir) {
-        if (random.nextFloat() < HIT) {
-            this.health -= attackDamage;
-        }
+    public boolean flying() {
+        return true;
     }
 
-    private void flying(float radius, float x, float y) {
+    @Override
+    public void hurt(Human player, int attackDamage, int attackDir) {
+        this.health -= attackDamage;
+    }
+
+    private void wander(float radius, float x, float y) {
         if (random.nextFloat() < TURN) {
             Vector wobble = new Vector(random.nextFloat() - 0.5f, random.nextFloat() - 0.5f);
             force = new Vector(x, y).subtract(position)

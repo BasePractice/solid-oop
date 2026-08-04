@@ -6,4 +6,9 @@ package ru.mifi.practice.entity;
  */
 public interface Bug extends Dynamic {
 
+    /**
+     * Летает ли насекомое. От этого зависит, каким предметом до него можно достать:
+     * тапком — до бегающих, мухобойкой — до летающих.
+     */
+    boolean flying();
 }

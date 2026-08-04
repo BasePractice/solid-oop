@@ -7,8 +7,15 @@ import ru.mifi.practice.ui.Tile;
 /**
  * Предмет инвентаря. Свеча светит, тапок бьёт, мебель ставится на пол — поэтому
  * подтипы объявлены отдельно, а игрок спрашивает не «что это», а «умеешь ли ты».
+ *
+ * <p>{@code reaches} отвечает на вопрос, достаёт ли предмет до конкретной цели:
+ * тапком муху в воздухе не поймать, а мухобойкой — можно. Промах живёт здесь,
+ * а не в самом насекомом: это свойство орудия, а не жертвы.
  */
 public interface Item extends Entity {
+
+    String name();
+
     boolean interact(Human player, Entity entity, int attackDir);
 
     void renderIcon(Screen screen, int x, int y);
@@ -18,6 +25,8 @@ public interface Item extends Entity {
     boolean isDepleted();
 
     boolean canAttack();
+
+    boolean reaches(Entity entity);
 
     int getAttackDamageBonus(Entity entity);
 

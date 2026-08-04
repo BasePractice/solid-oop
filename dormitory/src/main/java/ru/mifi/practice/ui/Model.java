@@ -1,6 +1,8 @@
 package ru.mifi.practice.ui;
 
 import ru.mifi.practice.entity.Human;
+import ru.mifi.practice.entity.Inventory;
+import ru.mifi.practice.entity.Item;
 import ru.mifi.practice.room.Room;
 
 import javax.imageio.ImageIO;
@@ -15,6 +17,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -269,9 +272,9 @@ public interface Model {
                     screen.render(x * 8, screen.height() - 16 + y * 8, 0 + 12 * 32, color, 0);
                 }
             }
-
-            Human player = room != null ? room.player() : null;
+            Human player = room.player();
             if (player != null) {
+                renderInventory(player.inventory());
                 for (int i = 0; i < 10; i++) {
                     if (i < player.health()) {
                         screen.render(i * 8, screen.height() - 16, 0 + 12 * 32, Color.get(0, 200, 500, 533), 0);
@@ -293,6 +296,25 @@ public interface Model {
                         }
                     }
                 }
+            }
+        }
+
+        /**
+         * Строка инвентаря справа внизу: иконка предмета и его номер. Выбранный
+         * подсвечен рамкой — иначе по одной иконке не понять, чем сейчас бьют.
+         */
+        private void renderInventory(Inventory inventory) {
+            List<Item> items = inventory.items();
+            int x = screen.width() - items.size() * 16 - 8;
+            int y = screen.height() - 16;
+            for (int i = 0; i < items.size(); i++) {
+                int slot = x + i * 16;
+                if (i == inventory.selected()) {
+                    screen.render(slot, y, 0 + 12 * 32, Color.get(0, 555, 555, 555), 0);
+                    screen.render(slot + 8, y, 0 + 12 * 32, Color.get(0, 555, 555, 555), 0);
+                }
+                items.get(i).renderIcon(screen, slot, y);
+                font.draw(String.valueOf(i + 1), slot + 8, y + 8, Color.get(-1, 555, 555, 555));
             }
         }
 
