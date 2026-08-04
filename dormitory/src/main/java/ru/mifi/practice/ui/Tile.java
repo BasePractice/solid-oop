@@ -7,11 +7,10 @@ import ru.mifi.practice.entity.Item;
 import ru.mifi.practice.room.Room;
 
 import java.util.Map;
-import java.util.Random;
 
 /**
  * Клетка пола. Каждый вид сам знает, как себя рисовать и как стыковаться с соседями,
- * поэтому комната про траву и камень ничего не знает — она хранит только байтовые
+ * поэтому комната про стены и доски ничего не знает — она хранит только байтовые
  * идентификаторы.
  *
  * <p>Реестр собирается один раз явным списком, а не самозаписью из конструктора:
@@ -19,27 +18,15 @@ import java.util.Random;
  * на которых поиск клетки вернул бы {@code null}.
  */
 public abstract class Tile {
-    public static final Tile GRASS = new GrassTile(0);
-    public static final Tile ROCK = new RockTile(1);
-    public static final Tile WATER = new WaterTile(2);
-    public static final Tile FLOWER = new FlowerTile(3);
-    public static final Tile DIRT = new DirtTile(4);
+    public static final Tile WALL = new WallTile(0);
+    public static final Tile FLOOR = new FloorTile(1);
     private static final Map<Byte, Tile> BY_ID = Map.of(
-        GRASS.id(), GRASS,
-        ROCK.id(), ROCK,
-        WATER.id(), WATER,
-        FLOWER.id(), FLOWER,
-        DIRT.id(), DIRT);
+        WALL.id(), WALL,
+        FLOOR.id(), FLOOR);
     private final byte id;
-    private final boolean connectsToGrass;
-    private final boolean connectsToSand;
-    private final boolean connectsToWater;
 
-    protected Tile(int id, boolean connectsToGrass, boolean connectsToSand, boolean connectsToWater) {
+    protected Tile(int id) {
         this.id = (byte) id;
-        this.connectsToGrass = connectsToGrass;
-        this.connectsToSand = connectsToSand;
-        this.connectsToWater = connectsToWater;
     }
 
     public static Tile byId(byte id) {
@@ -54,23 +41,11 @@ public abstract class Tile {
         return id;
     }
 
-    public final boolean connectsToGrass() {
-        return connectsToGrass;
-    }
-
-    public final boolean connectsToSand() {
-        return connectsToSand;
-    }
-
-    public final boolean connectsToWater() {
-        return connectsToWater;
-    }
-
     public abstract void render(Screen screen, Room room, int x, int y);
 
-    //TODO: Взаимодействие инструментов с клетками — копать землю, рубить камень, косить траву.
-    //      Не сделано сейчас: нужен инвентарь и типы инструментов, которых в модели ещё нет,
-    //      поэтому пока любая клетка отвечает отказом.
+    //TODO: Взаимодействие инструментов с клетками — отодрать обои, приподнять половицу.
+    //      Не сделано сейчас: нужен инвентарь с инструментами, а тапок и мухобойка
+    //      с клетками не работают, поэтому пока любая клетка отвечает отказом.
     public boolean interact(Room room, int xt, int yt, Human player, Item item, int attackDir) {
         return false;
     }
@@ -99,15 +74,20 @@ public abstract class Tile {
         return false;
     }
 
-    private static final class RockTile extends Tile {
-        private RockTile(int id) {
-            super(id, false, false, false);
+    /**
+     * Стена. Рисуется по соседям: если сверху и слева тоже стена, угол сплошной,
+     * иначе кладётся стык. Из-за этого сплошная кладка выглядит кладкой, а не
+     * набором отдельных кубиков.
+     */
+    private static final class WallTile extends Tile {
+        private WallTile(int id) {
+            super(id);
         }
 
         @Override
         public void render(Screen screen, Room room, int x, int y) {
             final int col = Color.get(444, 444, 333, 333);
-            final int transition = Color.get(111, 444, 555, Room.DIRT_COLOR);
+            final int transition = Color.get(111, 444, 555, Room.FLOOR_COLOR);
             final boolean u = room.getTile(x, y - 1) != this;
             final boolean d = room.getTile(x, y + 1) != this;
             final boolean l = room.getTile(x - 1, y) != this;
@@ -137,21 +117,20 @@ public abstract class Tile {
                 screen.render(x * 16 + 8, y * 16 + 8, dr ? 8 + 32 : 3, dr ? transition : col, dr ? 3 : 0);
             }
         }
-
-        @Override
-        public void hurt(Room room, int xt, int yt, Dynamic entity, int damage, int attackDir) {
-            room.setData(xt, yt, Math.max(room.getData(xt, yt) - damage, 0));
-        }
     }
 
-    private static final class DirtTile extends Tile {
-        private DirtTile(int id) {
-            super(id, false, false, false);
+    /**
+     * Дощатый пол. Ходить можно, светить нечем, ломать нечего.
+     */
+    private static final class FloorTile extends Tile {
+        private FloorTile(int id) {
+            super(id);
         }
 
         @Override
         public void render(Screen screen, Room room, int x, int y) {
-            int col = Color.get(Room.DIRT_COLOR, Room.DIRT_COLOR, Room.DIRT_COLOR - 111, Room.DIRT_COLOR - 111);
+            int col = Color.get(
+                Room.FLOOR_COLOR, Room.FLOOR_COLOR, Room.FLOOR_COLOR - 111, Room.FLOOR_COLOR - 111);
             screen.render(x * 16, y * 16, 0, col, 0);
             screen.render(x * 16 + 8, y * 16, 1, col, 0);
             screen.render(x * 16, y * 16 + 8, 2, col, 0);
@@ -161,115 +140,6 @@ public abstract class Tile {
         @Override
         public boolean mayPass(Room room, int xt, int yt, Entity entity) {
             return true;
-        }
-    }
-
-    private static sealed class GrassTile extends Tile permits FlowerTile {
-        private GrassTile(int id) {
-            super(id, true, false, false);
-        }
-
-        @Override
-        public void render(Screen screen, Room room, int x, int y) {
-            int col = Color.get(Room.GRASS_COLOR, Room.GRASS_COLOR, Room.GRASS_COLOR + 111, Room.GRASS_COLOR + 111);
-            int transition = Color.get(
-                Room.GRASS_COLOR - 111, Room.GRASS_COLOR, Room.GRASS_COLOR + 111, Room.DIRT_COLOR);
-            boolean u = !room.getTile(x, y - 1).connectsToGrass();
-            boolean d = !room.getTile(x, y + 1).connectsToGrass();
-            boolean l = !room.getTile(x - 1, y).connectsToGrass();
-            boolean r = !room.getTile(x + 1, y).connectsToGrass();
-            if (u || l) {
-                screen.render(x * 16, y * 16, (l ? 11 : 12) + (u ? 0 : 1) * 32, transition, 0);
-            } else {
-                screen.render(x * 16, y * 16, 0, col, 0);
-            }
-            if (u || r) {
-                screen.render(x * 16 + 8, y * 16, (r ? 13 : 12) + (u ? 0 : 1) * 32, transition, 0);
-            } else {
-                screen.render(x * 16 + 8, y * 16, 1, col, 0);
-            }
-            if (d || l) {
-                screen.render(x * 16, y * 16 + 8, (l ? 11 : 12) + (d ? 2 : 1) * 32, transition, 0);
-            } else {
-                screen.render(x * 16, y * 16 + 8, 2, col, 0);
-            }
-            if (d || r) {
-                screen.render(x * 16 + 8, y * 16 + 8, (r ? 13 : 12) + (d ? 2 : 1) * 32, transition, 0);
-            } else {
-                screen.render(x * 16 + 8, y * 16 + 8, 3, col, 0);
-            }
-        }
-
-        @Override
-        public boolean mayPass(Room room, int xt, int yt, Entity entity) {
-            return true;
-        }
-    }
-
-    private static final class FlowerTile extends GrassTile {
-        private FlowerTile(int id) {
-            super(id);
-        }
-
-        @Override
-        public void render(Screen screen, Room room, int x, int y) {
-            super.render(screen, room, x, y);
-            int flower = Color.get(10, Room.GRASS_COLOR, 555, 440);
-            if (room.getData(x, y) / 16 % 2 == 0) {
-                screen.render(x * 16, y * 16, 1 + 32, flower, 0);
-                screen.render(x * 16 + 8, y * 16 + 8, 1 + 32, flower, 0);
-            } else {
-                screen.render(x * 16 + 8, y * 16, 1 + 32, flower, 0);
-                screen.render(x * 16, y * 16 + 8, 1 + 32, flower, 0);
-            }
-        }
-
-        @Override
-        public void hurt(Room room, int xt, int yt, Dynamic entity, int damage, int attackDir) {
-            room.setTile(xt, yt, Tile.GRASS, 0);
-        }
-    }
-
-    private static final class WaterTile extends Tile {
-        private final Random random = new Random();
-
-        private WaterTile(int id) {
-            super(id, false, true, true);
-        }
-
-        @Override
-        public void render(Screen screen, Room room, int x, int y) {
-            int col = Color.get(5, 5, 115, 115);
-            int toDirt = Color.get(3, 5, Room.DIRT_COLOR - 111, Room.DIRT_COLOR);
-            int toGrass = Color.get(3, 5, Room.GRASS_COLOR - 110, Room.GRASS_COLOR);
-            boolean u = !room.getTile(x, y - 1).connectsToWater();
-            boolean d = !room.getTile(x, y + 1).connectsToWater();
-            boolean l = !room.getTile(x - 1, y).connectsToWater();
-            boolean r = !room.getTile(x + 1, y).connectsToWater();
-            boolean su = u && room.getTile(x, y - 1).connectsToSand();
-            boolean sd = d && room.getTile(x, y + 1).connectsToSand();
-            boolean sl = l && room.getTile(x - 1, y).connectsToSand();
-            boolean sr = r && room.getTile(x + 1, y).connectsToSand();
-            if (u || l) {
-                screen.render(x * 16, y * 16, (l ? 14 : 15) + (u ? 0 : 1) * 32, su || sl ? toGrass : toDirt, 0);
-            } else {
-                screen.render(x * 16, y * 16, random.nextInt(4), col, random.nextInt(4));
-            }
-            if (u || r) {
-                screen.render(x * 16 + 8, y * 16, (r ? 16 : 15) + (u ? 0 : 1) * 32, su || sr ? toGrass : toDirt, 0);
-            } else {
-                screen.render(x * 16 + 8, y * 16, random.nextInt(4), col, random.nextInt(4));
-            }
-            if (d || l) {
-                screen.render(x * 16, y * 16 + 8, (l ? 14 : 15) + (d ? 2 : 1) * 32, sd || sl ? toGrass : toDirt, 0);
-            } else {
-                screen.render(x * 16, y * 16 + 8, random.nextInt(4), col, random.nextInt(4));
-            }
-            if (d || r) {
-                screen.render(x * 16 + 8, y * 16 + 8, (r ? 16 : 15) + (d ? 2 : 1) * 32, sd || sr ? toGrass : toDirt, 0);
-            } else {
-                screen.render(x * 16 + 8, y * 16 + 8, random.nextInt(4), col, random.nextInt(4));
-            }
         }
     }
 }

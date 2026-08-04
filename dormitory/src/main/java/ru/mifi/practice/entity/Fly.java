@@ -11,6 +11,9 @@ import ru.mifi.practice.ui.Screen;
  *
  * <p>Тапком муху не достать вовсе — она в воздухе. Промах решается не здесь,
  * а в самом предмете: за это отвечает {@code Item.reaches}.
+ *
+ * <p>О стены муха отскакивает: летит она по координатам, минуя проверку клеток,
+ * поэтому границы комнаты учитываются вручную.
  */
 final class Fly extends AbstractDynamicEntity implements Bug {
     private static final float SPEED = 0.05f;
@@ -60,9 +63,28 @@ final class Fly extends AbstractDynamicEntity implements Bug {
                 .multiply(SPEED);
         }
         speed = speed.add(force).multiply(FRICTION);
-        position = position.add(speed);
+        Vector next = position.add(speed);
+        Vector inside = clamp(next);
+        if (inside.x() != next.x()) {
+            speed = new Vector(-speed.x(), speed.y());
+        }
+        if (inside.y() != next.y()) {
+            speed = new Vector(speed.x(), -speed.y());
+        }
+        position = inside;
         this.x = (int) position.x();
         this.y = (int) position.y();
+    }
+
+    /**
+     * Загоняет точку внутрь стен комнаты. Муха ходит не через {@code move2},
+     * а прямо по координатам, поэтому стены для неё приходится учитывать здесь.
+     */
+    private Vector clamp(Vector point) {
+        float low = Room.CELL;
+        return new Vector(
+            Math.min(Math.max(point.x(), low), (room.width() - 1) * Room.CELL - 1),
+            Math.min(Math.max(point.y(), low), (room.height() - 1) * Room.CELL - 1));
     }
 
     private record Vector(float x, float y) {

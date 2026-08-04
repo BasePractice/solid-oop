@@ -44,6 +44,7 @@ final class Default implements Room {
         this.tiles = buffer.tiles;
         this.data = buffer.datas;
         this.entitiesInTiles = buffer.entitiesInTiles;
+        generated.entities().forEach(this::add);
         this.player = factory.createPlayer(input, this);
         add(this.player);
         for (int i = 0; i < FLIES; i++) {
@@ -154,7 +155,6 @@ final class Default implements Room {
                 }
                 Set<Entity> entities = entitiesInTiles.get(x + y * this.width());
                 for (Entity e : entities) {
-                    // e.render(screen);
                     int lr = e.getLightRadius();
                     if (lr > 0) {
                         screen.renderLight(e.getX() - 1, e.getY() - 4, lr * 8);
@@ -185,10 +185,7 @@ final class Default implements Room {
 
                 entity.tick();
                 if (entity.isRemoved()) {
-                    //remove(entity);
-                    entities.remove(entity.id());
                     removeEntity(xto, yto, entity);
-                    System.out.println("Removed: " + entity.getClass().getSimpleName());
                 } else {
                     int xt = entity.getX() >> 4;
                     int yt = entity.getY() >> 4;
@@ -210,7 +207,7 @@ final class Default implements Room {
     @Override
     public Tile getTile(int x, int y) {
         if (x < 0 || y < 0 || x >= width || y >= height) {
-            return Tile.ROCK;
+            return Tile.WALL;
         }
         byte id = tiles[x + y * width];
         return Tile.byId(id);

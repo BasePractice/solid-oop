@@ -15,7 +15,11 @@ public interface EntityFactory {
 
     Inventory createInventory();
 
-    Entity createCube(int x, int y, int z, int side);
+    Entity createTable(int x, int y);
+
+    Entity createChair(int x, int y);
+
+    Entity createWardrobe(int x, int y);
 
     Entity createFly(int x, int y, int z, Room room);
 }

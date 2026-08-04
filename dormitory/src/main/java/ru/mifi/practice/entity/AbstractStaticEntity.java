@@ -1,14 +1,15 @@
 package ru.mifi.practice.entity;
 
-import java.util.Random;
 import java.util.UUID;
 
 /**
  * Общая часть неподвижных сущностей: место в комнате и размеры. Наследование здесь
  * показано намеренно — это итоговый модуль курса.
+ *
+ * <p>{@code intersects} обязателен: комната отбирает соседей именно им, и без него
+ * мебель не попадала бы в выборку, а значит никого бы не задерживала.
  */
 abstract class AbstractStaticEntity implements Static {
-    protected final Random random = new Random();
     protected final int x;
     protected final int y;
     protected final int z;
@@ -28,22 +29,27 @@ abstract class AbstractStaticEntity implements Static {
     }
 
     @Override
-    public int getX() {
+    public final int getX() {
         return x;
     }
 
     @Override
-    public int getY() {
+    public final int getY() {
         return y;
     }
 
     @Override
-    public int getZ() {
+    public final int getZ() {
         return z;
     }
 
     @Override
-    public UUID id() {
+    public final UUID id() {
         return id;
+    }
+
+    @Override
+    public boolean intersects(int x0, int y0, int x1, int y1) {
+        return x + width >= x0 && y + height >= y0 && x <= x1 && y <= y1;
     }
 }

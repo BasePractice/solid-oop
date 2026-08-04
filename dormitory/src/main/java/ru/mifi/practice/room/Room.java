@@ -8,7 +8,6 @@ import ru.mifi.practice.ui.Screen;
 import ru.mifi.practice.ui.Tile;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,13 +17,24 @@ import java.util.Set;
  * а не объектами, поэтому копия карты стоит одного {@code System.arraycopy}.
  */
 public interface Room {
-    int DIRT_COLOR = 322;
-    int GRASS_COLOR = 141;
+    int FLOOR_COLOR = 322;
     int SIDE = 24;
+    int CELL = 16;
     Generator DEFAULT_GENERATOR = (width, height, factory) -> {
         byte[] tiles = new byte[width * height];
-        Arrays.fill(tiles, Tile.GRASS.id());
-        return new Data(width, height, tiles, new byte[width * height]);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                boolean edge = x == 0 || y == 0 || x == width - 1 || y == height - 1;
+                tiles[x + y * width] = edge ? Tile.WALL.id() : Tile.FLOOR.id();
+            }
+        }
+        return new Data(width, height, tiles, new byte[width * height], List.of(
+            factory.createTable(7 * CELL, 4 * CELL),
+            factory.createChair(6 * CELL, 6 * CELL),
+            factory.createChair(9 * CELL, 6 * CELL),
+            factory.createWardrobe(2 * CELL, 2 * CELL),
+            factory.createWardrobe(18 * CELL, 17 * CELL)
+        ));
     };
     Factory DEFAULT_FACTORY = (name, input) ->
         new Default(name, input, SIDE, SIDE, DEFAULT_GENERATOR, EntityFactory.DEFAULT);
@@ -91,13 +101,18 @@ public interface Room {
     }
 
     /**
-     * Сгенерированная карта. Массивы копируются на входе и на выходе — record
-     * обещает неизменяемость, и без копий это обещание было бы ложным.
+     * Сгенерированная карта: клетки, их данные и обстановка. Массивы копируются
+     * на входе и на выходе — record обещает неизменяемость, и без копий это
+     * обещание было бы ложным.
+     *
+     * <p>Насекомых здесь нет: их конструктор требует уже созданную комнату,
+     * а комнаты в момент генерации ещё не существует.
      */
-    record Data(int width, int height, byte[] tiles, byte[] data) {
+    record Data(int width, int height, byte[] tiles, byte[] data, List<Entity> entities) {
         public Data {
             tiles = tiles.clone();
             data = data.clone();
+            entities = List.copyOf(entities);
         }
 
         @Override
