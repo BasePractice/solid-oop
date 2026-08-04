@@ -4,25 +4,36 @@ import ru.mifi.practice.room.Room;
 import ru.mifi.practice.ui.Color;
 import ru.mifi.practice.ui.Screen;
 
+/**
+ * Муха. Кружит вокруг источника света: раз в несколько тактов выбирает новую тягу —
+ * сумму направления на свет и случайного отклонения, — а дальше летит по инерции
+ * с трением. Из-за отклонения траектория не сходится в точку, а вьётся вокруг неё.
+ *
+ * <p>Тапком муху почти не достать: удар засчитывается лишь в десятой части случаев,
+ * для неё нужна мухобойка.
+ */
 final class Fly extends AbstractDynamicEntity implements Bug {
     private static final float SPEED = 0.05f;
     private static final float FRICTION = 0.98f;
+    private static final float TURN = 0.2f;
+    private static final float HIT = 0.1f;
+    private static final int HEALTH = 20;
     private final Room room;
-    private Vector p = new Vector(0, 0);
-    private Vector s = new Vector(0, 0);
-    private Vector f = new Vector(0, 0);
+    private Vector position;
+    private Vector speed = new Vector(0, 0);
+    private Vector force = new Vector(0, 0);
 
     Fly(int x, int y, int z, Room room) {
         super(x, y, z, 1);
         this.room = room;
-        this.health = 20;
+        this.position = new Vector(x, y);
+        this.health = HEALTH;
     }
 
     @Override
     public void tick() {
         Human player = room.player();
-        int radius = player.getLightRadius() * 2;
-        flying(radius, player.getX(), player.getY());
+        flying(player.getLightRadius() * 2, player.getX(), player.getY());
     }
 
     @Override
@@ -32,22 +43,24 @@ final class Fly extends AbstractDynamicEntity implements Bug {
 
     @Override
     public void hurt(Human player, int attackDamage, int attackDir) {
-        if (random.nextFloat() < 0.1f) {
+        if (random.nextFloat() < HIT) {
             this.health -= attackDamage;
         }
     }
 
     private void flying(float radius, float x, float y) {
-        if (random.nextFloat() < 0.2f) {
-            Vector center = new Vector(x, y);
-            Vector v = new Vector(random.nextFloat() - 0.5f, random.nextFloat() - 0.5f);
-            f = center.subtract(p).multiply(0.5f / radius).add(v).normalize().multiply(SPEED);
+        if (random.nextFloat() < TURN) {
+            Vector wobble = new Vector(random.nextFloat() - 0.5f, random.nextFloat() - 0.5f);
+            force = new Vector(x, y).subtract(position)
+                .multiply(0.5f / radius)
+                .add(wobble)
+                .normalize()
+                .multiply(SPEED);
         }
-        s = s.add(f).multiply(FRICTION);
-        p = p.add(s);
-
-        this.x = (int) p.x;
-        this.y = (int) p.y;
+        speed = speed.add(force).multiply(FRICTION);
+        position = position.add(speed);
+        this.x = (int) position.x();
+        this.y = (int) position.y();
     }
 
     private record Vector(float x, float y) {
@@ -69,7 +82,11 @@ final class Fly extends AbstractDynamicEntity implements Bug {
         }
 
         Vector normalize() {
-            return new Vector(x / length(), y / length());
+            float length = length();
+            if (length == 0) {
+                return this;
+            }
+            return new Vector(x / length, y / length);
         }
     }
 }

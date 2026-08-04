@@ -3,6 +3,10 @@ package ru.mifi.practice.entity;
 import ru.mifi.practice.room.Room;
 import ru.mifi.practice.ui.Handler;
 
+/**
+ * Фабрика по умолчанию. Классы сущностей пакетно-приватные, поэтому подменить их
+ * можно только вместе с фабрикой — снаружи они не видны.
+ */
 final class DefaultEntityFactory implements EntityFactory {
     @Override
     public Human createPlayer(Handler input, Room root) {

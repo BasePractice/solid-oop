@@ -3,6 +3,10 @@ package ru.mifi.practice.entity;
 import java.util.Random;
 import java.util.UUID;
 
+/**
+ * Общая часть неподвижных сущностей: место в комнате и размеры. Наследование здесь
+ * показано намеренно — это итоговый модуль курса.
+ */
 abstract class AbstractStaticEntity implements Static {
     protected final Random random = new Random();
     protected final int x;

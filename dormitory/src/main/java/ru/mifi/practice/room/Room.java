@@ -31,8 +31,6 @@ public interface Room {
 
     Human player();
 
-    boolean canRender();
-
     int width();
 
     int height();
@@ -86,14 +84,6 @@ public interface Room {
                 result.add(new HashSet<>());
             }
             return result;
-        }
-
-        void copy(Buffer buffer) {
-            System.arraycopy(buffer.tiles, 0, this.tiles, 0, tiles.length);
-            System.arraycopy(buffer.datas, 0, this.datas, 0, datas.length);
-            for (int i = 0; i < buffer.entitiesInTiles.size(); i++) {
-                this.entitiesInTiles.set(i, new HashSet<>(buffer.entitiesInTiles.get(i)));
-            }
         }
     }
 

@@ -7,6 +7,11 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Общая часть подвижных сущностей: координаты, здоровье и, главное, шаг с проверкой
+ * столкновений. Шаг разложен на две оси: упершись в стену боком, сущность всё равно
+ * скользит вдоль неё, а не застревает.
+ */
 abstract class AbstractDynamicEntity implements Dynamic {
     protected final Random random = new Random();
     private final UUID id;
@@ -44,11 +49,6 @@ abstract class AbstractDynamicEntity implements Dynamic {
     @Override
     public UUID id() {
         return id;
-    }
-
-    @Override
-    public void tick() {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
@@ -92,7 +92,7 @@ abstract class AbstractDynamicEntity implements Dynamic {
 
     protected boolean move2(Room room, int xa, int ya) {
         if (xa != 0 && ya != 0) {
-            throw new IllegalArgumentException("Move2 can only move along one axis at a time!");
+            throw new IllegalArgumentException("Entity can move along one axis at a time, got " + xa + " and " + ya);
         }
 
         int xto0 = (x - xr) >> 4;

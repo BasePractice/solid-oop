@@ -16,40 +16,38 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Комната с одним слоем карты. Сущности разложены по клеткам, поэтому поиск соседей
+ * стоит перебора нескольких клеток, а не всего списка.
+ */
 final class Default implements Room {
+    private static final int FLIES = 30;
     private final Human player;
-    private final Buffer[] buffers;
     private final String name;
     private final int width;
     private final int height;
     private final Map<UUID, Entity.Data> entities = new HashMap<>();
     private final List<Set<Entity>> entitiesInTiles;
-    private byte[] tiles;
-    private byte[] data;
-    private int swapBuffer;
-
+    private final byte[] tiles;
+    private final byte[] data;
     private int xo;
     private int yo;
     private int ho;
     private int wo;
 
-    public Default(String name, Handler input, int width, int height, Generator generator, EntityFactory factory) {
+    Default(String name, Handler input, int width, int height, Generator generator, EntityFactory factory) {
         this.name = name;
         this.width = width;
         this.height = height;
-        Data generate = generator.generate(width, height, factory);
-        this.buffers = new Buffer[2];
-        this.buffers[0] = new Buffer(width, height, generate.tiles(), generate.data());
-        this.buffers[1] = new Buffer(width, height, generate.tiles(), generate.data());
-        this.swapBuffer = 0;
-        this.tiles = buffers[swapBuffer].tiles;
-        this.data = buffers[swapBuffer].datas;
-        this.entitiesInTiles = buffers[swapBuffer].entitiesInTiles;
-        this.swapBuffer = 1;
+        Data generated = generator.generate(width, height, factory);
+        Buffer buffer = new Buffer(width, height, generated.tiles(), generated.data());
+        this.tiles = buffer.tiles;
+        this.data = buffer.datas;
+        this.entitiesInTiles = buffer.entitiesInTiles;
         this.player = factory.createPlayer(input, this);
         add(this.player);
-        for (int i = 0; i < 100; i++) {
-            add(factory.createFly(i * 2, 40, 5, this));
+        for (int i = 0; i < FLIES; i++) {
+            add(factory.createFly(width * 8, height * 8, 5, this));
         }
     }
 
@@ -86,16 +84,6 @@ final class Default implements Room {
         return player;
     }
 
-    void updateSwap() {
-        int i = prevBuffer();
-        buffers[swapBuffer].copy(buffers[i]);
-    }
-
-    @Override
-    public boolean canRender() {
-        return true;
-    }
-
     @Override
     public int width() {
         return width;
@@ -104,62 +92,6 @@ final class Default implements Room {
     @Override
     public int height() {
         return height;
-    }
-
-    void swap() {
-        this.tiles = buffers[swapBuffer].tiles;
-        this.data = buffers[swapBuffer].datas;
-        nextBuffer();
-    }
-
-    private void nextBuffer() {
-        swapBuffer++;
-        if (swapBuffer >= buffers.length) {
-            swapBuffer = 0;
-        }
-    }
-
-    private int prevBuffer() {
-        return swapBuffer - 1 < 0 ? buffers.length - 1 : swapBuffer - 1;
-    }
-
-    void updateTile(int x, int y, Tile t, int dataVal) {
-        if (x < 0 || y < 0 || x >= width || y >= height) {
-            return;
-        }
-        buffers[swapBuffer].tiles[x + y * width] = t.id();
-        updateData(x, y, dataVal);
-    }
-
-    void updateData(int x, int y, int value) {
-        if (x < 0 || y < 0 || x >= width || y >= height) {
-            return;
-        }
-        buffers[swapBuffer].datas[x + y * width] = (byte) value;
-    }
-
-    void updateRemoveEntity(Entity entity) {
-        int x = entity.getX() >> 4;
-        int y = entity.getY() >> 4;
-        if (x < 0 || y < 0 || x >= width || y >= height) {
-            return;
-        }
-        Entity.Data data = removeEntity(entity);
-        if (data != null) {
-            buffers[swapBuffer].entitiesInTiles.get(data.index()).remove(entity);
-        }
-    }
-
-    void updateInsertEntity(Entity entity) {
-        int x = entity.getX() >> 4;
-        int y = entity.getY() >> 4;
-
-        if (x < 0 || y < 0 || x >= width || y >= height) {
-            return;
-        }
-        int index = x + y * width;
-        putEntity(entity, index);
-        buffers[swapBuffer].entitiesInTiles.get(index).add(entity);
     }
 
     @Override

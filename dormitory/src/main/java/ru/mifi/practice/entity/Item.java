@@ -4,6 +4,10 @@ import ru.mifi.practice.room.Room;
 import ru.mifi.practice.ui.Screen;
 import ru.mifi.practice.ui.Tile;
 
+/**
+ * Предмет инвентаря. Свеча светит, тапок бьёт, мебель ставится на пол — поэтому
+ * подтипы объявлены отдельно, а игрок спрашивает не «что это», а «умеешь ли ты».
+ */
 public interface Item extends Entity {
     boolean interact(Human player, Entity entity, int attackDir);
 

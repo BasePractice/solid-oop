@@ -9,6 +9,13 @@ import java.util.Set;
 
 import static ru.mifi.practice.ui.Color.get;
 
+/**
+ * Игрок. Клавиши превращаются в шаг, удар и применение предмета; сам шаг считает
+ * базовый класс, потому что упереться в стену может любая подвижная сущность.
+ *
+ * <p>Выносливость тратится на каждый удар и восстанавливается с задержкой — иначе
+ * тапком можно было бы махать без остановки.
+ */
 final class Player extends AbstractDynamicEntity implements Human {
     private static final int MAX_STAMINA = 10;
     private final Handler input;
@@ -46,6 +53,7 @@ final class Player extends AbstractDynamicEntity implements Human {
 
     @Override
     public Point move() {
+        knockBack();
         int xa = 0;
         int ya = 0;
         if (input.up.down) {
@@ -60,60 +68,44 @@ final class Player extends AbstractDynamicEntity implements Human {
         if (input.right.down) {
             xa++;
         }
-
-        {
-            if (xKnockBack < 0) {
-                move2(room, -1, 0);
-                xKnockBack++;
-            }
-            if (xKnockBack > 0) {
-                move2(room, 1, 0);
-                xKnockBack--;
-            }
-            if (yKnockBack < 0) {
-                move2(room, 0, -1);
-                yKnockBack++;
-            }
-            if (yKnockBack > 0) {
-                move2(room, 0, 1);
-                yKnockBack--;
-            }
-            if (xa != 0 || ya != 0) {
-                walkDist++;
-                if (xa < 0) {
-                    dir = 2;
-                }
-                if (xa > 0) {
-                    dir = 3;
-                }
-                if (ya < 0) {
-                    dir = 1;
-                }
-                if (ya > 0) {
-                    dir = 0;
-                }
-            }
+        if (xa == 0 && ya == 0) {
+            return new Point(0, 0);
         }
-
-        {
-            if (xa != 0 || ya != 0) {
-                boolean stopped = true;
-                if (xa != 0 && move2(room, xa, 0)) {
-                    stopped = false;
-                }
-                if (ya != 0 && move2(room, 0, ya)) {
-                    stopped = false;
-                }
-                if (!stopped) {
-                    int xt = x >> 4;
-                    int yt = y >> 4;
-                    room.getTile(xt, yt).steppedOn(room, xt, yt, this);
-                }
-            }
+        walkDist++;
+        dir = direction(xa, ya);
+        if (!move(room, xa, ya)) {
+            return new Point(0, 0);
         }
-
-
         return new Point(xa, ya);
+    }
+
+    private void knockBack() {
+        if (xKnockBack < 0) {
+            move2(room, -1, 0);
+            xKnockBack++;
+        }
+        if (xKnockBack > 0) {
+            move2(room, 1, 0);
+            xKnockBack--;
+        }
+        if (yKnockBack < 0) {
+            move2(room, 0, -1);
+            yKnockBack++;
+        }
+        if (yKnockBack > 0) {
+            move2(room, 0, 1);
+            yKnockBack--;
+        }
+    }
+
+    private static int direction(int xa, int ya) {
+        if (ya > 0) {
+            return 0;
+        }
+        if (ya < 0) {
+            return 1;
+        }
+        return xa < 0 ? 2 : 3;
     }
 
     @Override
@@ -221,17 +213,8 @@ final class Player extends AbstractDynamicEntity implements Human {
             }
         }
 
-        Point move = move();
-        int xa = move.x;
-        int ya = move.y;
-
-        if (staminaRechargeDelay % 2 == 0) {
-            x += xa;
-            y += ya;
-            state = State.WALK;
-        } else {
-            state = State.STAY;
-        }
+        Point moved = move();
+        state = moved.x == 0 && moved.y == 0 ? State.STAY : State.WALK;
 
         if (input.isAttacked() && stamina > 0) {
             stamina--;

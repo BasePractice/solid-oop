@@ -38,33 +38,24 @@ public interface Model {
 
     int time();
 
-    void respawn();
-
     void addHandler(Handler handler);
 
     final class Default extends Canvas implements Runnable, Model {
-        private final int[] colors = new int[256];
+        private final Palette palette = new Palette();
         private final JFrame frame;
         private final Handler input;
+        private final Room room;
         private final boolean development;
         private BufferedImage image;
         private int[] pixels;
-        private boolean running = false;
         private Screen screen;
         private Screen lightScreen;
         private Font font;
-        private int tickCount = 0;
-        private int gameTime = 0;
-        private int lightning = 2;
-        private int playerDeadTime;
-        private int wonTimer = 0;
-        private boolean hasWon = false;
-        private boolean respawn = false;
-        private int drawableFrames = 0;
-        private int drawableTicks = 0;
-        private int distance;
-        private boolean fastQuit = false;
-        private final Room room;
+        private boolean running;
+        private int tickCount;
+        private int gameTime;
+        private int drawableFrames;
+        private int drawableTicks;
 
         private Default(boolean development) {
             selfUpdate();
@@ -105,52 +96,9 @@ public interface Model {
             return 3;
         }
 
-        public void stop() {
-            running = false;
-        }
-
-        public void reset() {
-            if (fastQuit) {
-                fastQuit = false;
-                return;
-            }
-            playerDeadTime = 0;
-            wonTimer = 0;
-            gameTime = 0;
-            hasWon = false;
-        }
-
-        @Override
-        public void respawn() {
-            playerDeadTime = 0;
-            wonTimer = 0;
-            gameTime = 0;
-            fastQuit = false;
-            respawn = true;
-        }
-
         @Override
         public int time() {
             return gameTime;
-        }
-
-        private void init() {
-            int pp = 0;
-            for (int r = 0; r < 6; r++) {
-                for (int g = 0; g < 6; g++) {
-                    for (int b = 0; b < 6; b++) {
-                        int rr = r * 255 / 5;
-                        int gg = g * 255 / 5;
-                        int bb = b * 255 / 5;
-                        int mid = (rr * 30 + gg * 59 + bb * 11) / 100;
-                        int r1 = (rr + mid) / 2 * 230 / 255 + 10;
-                        int g1 = (gg + mid) / 2 * 230 / 255 + 10;
-                        int b1 = (bb + mid) / 2 * 230 / 255 + 10;
-                        colors[pp++] = r1 << 16 | g1 << 8 | b1;
-                    }
-                }
-            }
-            reset();
         }
 
         public void run() {
@@ -161,7 +109,6 @@ public interface Model {
             int ticks = 0;
             long lastTimer1 = System.currentTimeMillis();
 
-            init();
             try {
                 while (running) {
                     long now = System.nanoTime();
@@ -194,10 +141,9 @@ public interface Model {
                         ticks = 0;
                     }
                 }
-            } catch (Exception ex) {
-                ex.printStackTrace();
+            } finally {
+                frame.dispose();
             }
-            frame.dispose();
         }
 
         public void tick() {
@@ -231,7 +177,7 @@ public interface Model {
             }
 
             Human player = room.player();
-            if (player != null && room.canRender()) {
+            if (player != null) {
                 int xScroll = player.getX() - screen.width() / 2;
                 int yScroll = player.getY() - (screen.height() - 8) / 2;
                 if (xScroll < 16) {
@@ -246,22 +192,12 @@ public interface Model {
                 if (yScroll > room.height() * 16 - screen.height() - 16) {
                     yScroll = room.height() * 16 - screen.height() - 16;
                 }
-                if (lightning > 3) {
-                    int col = Color.get(20, 20, 121, 121);
-                    for (int y = 0; y < 14; y++) {
-                        for (int x = 0; x < 24; x++) {
-                            screen.render(x * 8 - ((xScroll / 4) & 7), y * 8 - ((yScroll / 4) & 7), 0, col, 0);
-                        }
-                    }
-                }
                 room.renderBackground(screen, xScroll, yScroll);
                 room.renderSprites(screen, xScroll, yScroll);
 
-                if (lightning < 3) {
-                    lightScreen.clear(0);
-                    room.renderLight(lightScreen, xScroll, yScroll);
-                    screen.overlay(lightScreen, xScroll, yScroll);
-                }
+                lightScreen.clear(0);
+                room.renderLight(lightScreen, xScroll, yScroll);
+                screen.overlay(lightScreen, xScroll, yScroll);
             }
 
             renderGui(color);
@@ -310,7 +246,7 @@ public interface Model {
                 for (int x = 0; x < screen.width(); x++) {
                     int cc = screen.pixel(x + y * screen.width());
                     if (cc < 255) {
-                        pixels[x + y * width()] = colors[cc];
+                        pixels[x + y * width()] = palette.rgb(cc);
                     }
                 }
             }
@@ -402,7 +338,6 @@ public interface Model {
             screen = new Screen.Default(width(), height(), sheet);
             lightScreen = new Screen.Default(width(), height(), sheet);
             font = new Font.Default(screen);
-            distance = Math.max(screen.width() / 2, (screen.height() - 8) / 2);
         }
 
         private static SpriteSheet sheet(String name) {
