@@ -2,6 +2,10 @@ package ru.mifi.practice.vol2.ant;
 
 import ru.mifi.practice.vol2.ant.Grid.Direction;
 
+/**
+ * Ход одного прогона: своя копия карты, положение и направление муравья. Копия нужна,
+ * чтобы следующая стратегия начинала на нетронутом поле.
+ */
 public interface State {
 
     boolean next(Ant ant);
@@ -22,7 +26,7 @@ public interface State {
             this.map = map.copy();
             this.antPositionX = antPositionX;
             this.antPositionY = antPositionY;
-            this.foods = map.foods();
+            this.foods = this.map.foods();
             this.direction = Direction.RIGHT;
         }
 

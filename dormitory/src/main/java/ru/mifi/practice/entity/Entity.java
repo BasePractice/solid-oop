@@ -4,7 +4,6 @@ import ru.mifi.practice.ui.Screen;
 
 import java.util.UUID;
 
-@SuppressWarnings("MethodName")
 public interface Entity {
 
     UUID id();

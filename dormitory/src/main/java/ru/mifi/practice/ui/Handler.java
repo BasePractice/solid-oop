@@ -128,10 +128,15 @@ public final class Handler implements KeyListener {
     }
 
     public void keyTyped(KeyEvent ke) {
+        //Символ берётся из keyPressed вместе с кодом клавиши, отдельное событие не нужно
     }
 
     public boolean isAttacked() {
         return attack.clicked;
+    }
+
+    public boolean isUsed() {
+        return menu.clicked;
     }
 
     public static sealed class Key {

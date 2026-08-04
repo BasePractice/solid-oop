@@ -2,6 +2,11 @@ package ru.mifi.practice.ui;
 
 import java.util.Arrays;
 
+/**
+ * Экран из пикселей-индексов палитры. Наложение света работает через {@code pixel},
+ * а не через приведение к конкретной реализации — иначе второй вид экрана уронил бы
+ * программу на {@code ClassCastException}.
+ */
 public interface Screen {
     int width();
 
@@ -86,9 +91,9 @@ public interface Screen {
                     if (mirrorX) {
                         xs = 7 - x;
                     }
-                    int col = (colors >> (sheet.pixels[xs + ys * sheet.width + toffs] * 8)) & 255;
+                    int col = colors >> sheet.pixels[xs + ys * sheet.width + toffs] * 8 & 255;
                     if (col < 255) {
-                        pixels[(x + xp) + (y + yp) * width] = col;
+                        pixels[x + xp + (y + yp) * width] = col;
                     }
                 }
             }
@@ -102,11 +107,10 @@ public interface Screen {
 
         @Override
         public void overlay(Screen screen, int xa, int ya) {
-            int[] oPixels = ((Default) screen).pixels;
             int i = 0;
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
-                    if (oPixels[i] / 10 <= dither[((x + xa) & 3) + ((y + ya) & 3) * 4]) {
+                    if (screen.pixel(i) / 10 <= dither[((x + xa) & 3) + ((y + ya) & 3) * 4]) {
                         pixels[i] = 0;
                     }
                     i++;

@@ -2,6 +2,7 @@ package ru.mifi.practice.vol1.agent;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -11,6 +12,11 @@ import static ru.mifi.practice.vol1.agent.Event.Listener;
 import static ru.mifi.practice.vol1.agent.Transport.Message;
 import static ru.mifi.practice.vol1.agent.Transport.Replay;
 
+/**
+ * Среда, в которой живут агенты: раздаёт им транспорт, разносит события и двигает время.
+ * Рассылка идёт по копии списка слушателей — обработчик вправе зарегистрировать
+ * нового агента прямо во время рассылки, и это не должно рушить обход.
+ */
 public interface Environment extends Using, Registrar {
 
     Snapshot snapshot();
@@ -42,10 +48,10 @@ public interface Environment extends Using, Registrar {
     final class Default implements Environment, Snapshot {
         private final Map<Object, Agent> agents = new HashMap<>();
         private final Set<Listener> listeners = new HashSet<>();
-        private final Transport transport;
+        private final Transport.Factory factory;
 
         private Default(Transport.Factory factory) {
-            this.transport = factory.create(this);
+            this.factory = factory;
         }
 
         @Override
@@ -55,25 +61,29 @@ public interface Environment extends Using, Registrar {
 
         @Override
         public void register(Agent.Factory factory) {
-            register(factory.create(transport));
-        }
-
-        private void register(Agent agent) {
-            Object id = agent.id();
-            if (agents.containsKey(id)) {
-                throw new IllegalArgumentException("Agent " + id + " is already registered");
-            }
-            agents.put(id, agent);
-            subscribe(agent);
+            Transport transport = this.factory.create(this);
+            register(factory.create(transport), transport);
         }
 
         @Override
         public void register(Agent.Iterator iterator) {
+            Transport transport = factory.create(this);
             Optional<Agent> agent = iterator.next(transport);
             while (agent.isPresent()) {
-                register(agent.get());
+                register(agent.get(), transport);
+                transport = factory.create(this);
                 agent = iterator.next(transport);
             }
+        }
+
+        private void register(Agent agent, Transport transport) {
+            Object id = agent.id();
+            if (agents.containsKey(id)) {
+                throw new IllegalArgumentException("Agent " + id + " is already registered");
+            }
+            transport.own(agent);
+            agents.put(id, agent);
+            subscribe(agent);
         }
 
         @Override
@@ -84,19 +94,20 @@ public interface Environment extends Using, Registrar {
         @Override
         public Optional<Replay> receive(Object target, Object source, Message message) {
             if (target == this || target == null) {
-                listeners.forEach(listener -> listener.onEvent(
-                    new EventMessage(message, this, source)));
+                for (Listener listener : List.copyOf(listeners)) {
+                    listener.onEvent(new EventMessage(message, this, source));
+                }
             }
             Agent agent = agents.get(target);
-            if (agent != null) {
-                return agent.call(message);
+            if (agent == null) {
+                return Optional.empty();
             }
-            return Optional.empty();
+            return agent.call(message);
         }
 
         @Override
         public void tick(Snapshot snapshot) {
-            for (Agent agent : agents.values()) {
+            for (Agent agent : List.copyOf(agents.values())) {
                 agent.tick(snapshot);
             }
         }

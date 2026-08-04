@@ -3,8 +3,14 @@ package ru.mifi.practice.vol6.transport;
 import java.util.Optional;
 import java.util.Scanner;
 
+/**
+ * Источник ввода. Меню его не создаёт и не закрывает — это забота сборки приложения.
+ */
 public interface Input extends AutoCloseable {
-    Input DEFAULT = new Standard();
+
+    static Input standard() {
+        return new Standard();
+    }
 
     String inputString();
 

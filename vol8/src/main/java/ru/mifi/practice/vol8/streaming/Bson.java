@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,8 +57,9 @@ public interface Bson {
             raf.close();
             try (stream; var inputStream = new FileInputStream(temporaryFile)) {
                 ByteStreams.copy(inputStream, stream);
+            } finally {
+                Files.deleteIfExists(temporaryFile.toPath());
             }
-            temporaryFile.delete();
         }
 
         @Override
@@ -137,42 +139,42 @@ public interface Bson {
             return (byte) stream.read();
         }
 
-        @SneakyThrows
         @Override
         public void readBytes(byte[] bytes) {
-            ensureAvailable(bytes.length);
-            stream.read(bytes);
+            readBytes(bytes, 0, bytes.length);
         }
 
         @SneakyThrows
         @Override
         public void readBytes(byte[] bytes, int offset, int length) {
             ensureAvailable(length);
-            stream.read(bytes, 0, length);
+            int read = stream.readNBytes(bytes, offset, length);
+            if (read != length) {
+                throw new BsonSerializationException(
+                    format("While decoding a BSON document %d bytes were required, but only %d were read",
+                        length, read));
+            }
         }
 
         @Override
         public long readInt64() {
-            ensureAvailable(8);
-            byte[] bytes = new byte[8];
-            readBytes(bytes);
-            return Utils.readInt64(bytes, 0);
+            return new LittleEndian(next(8)).int64();
         }
 
         @Override
         public double readDouble() {
-            ensureAvailable(8);
-            byte[] bytes = new byte[8];
-            readBytes(bytes);
-            return Utils.readInt64(bytes, 0);
+            return new LittleEndian(next(8)).real();
         }
 
         @Override
         public int readInt32() {
-            ensureAvailable(4);
-            byte[] bytes = new byte[4];
+            return new LittleEndian(next(4)).int32();
+        }
+
+        private byte[] next(int length) {
+            byte[] bytes = new byte[length];
             readBytes(bytes);
-            return Utils.readInt32(bytes, 0);
+            return bytes;
         }
 
         @Override
@@ -215,7 +217,9 @@ public interface Bson {
             return new ObjectId(bytes);
         }
 
-        //FIXME: Переписать на потоковое чтение строки
+        //TODO: Читать cstring потоково, без mark/reset. Сейчас строка ограничена READ_LIMIT
+        //      байтами буфера, потому что позиция ищется проходом вперёд с последующим откатом.
+        //      Не сделано сразу: требует собственного буфера вместо BufferedInputStream.
         @SneakyThrows
         @Override
         public String readCString() {
@@ -244,17 +248,15 @@ public interface Bson {
             stream.skip(numBytes);
         }
 
-        @SuppressWarnings({"Convert2Lambda", "Anonymous2MethodRef"})
         @Override
         public BsonInputMark getMark(int readLimit) {
             stream.mark(readLimit);
-            return new BsonInputMark() {
-                @SneakyThrows
-                @Override
-                public void reset() {
-                    stream.reset();
-                }
-            };
+            return this::rewind;
+        }
+
+        @SneakyThrows
+        private void rewind() {
+            stream.reset();
         }
 
         @SneakyThrows
@@ -283,8 +285,7 @@ public interface Bson {
                 super(in);
             }
 
-            @SuppressWarnings("PMD.UnusedPrivateMethod")
-            private int getPosition() {
+            int getPosition() {
                 return pos;
             }
         }

@@ -7,23 +7,27 @@ import ru.mifi.practice.ui.Handler;
 import ru.mifi.practice.ui.Screen;
 import ru.mifi.practice.ui.Tile;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+/**
+ * Комната: карта клеток, их данные и населяющие её сущности. Хранит клетки байтами,
+ * а не объектами, поэтому копия карты стоит одного {@code System.arraycopy}.
+ */
 public interface Room {
     int DIRT_COLOR = 322;
     int GRASS_COLOR = 141;
+    int SIDE = 24;
     Generator DEFAULT_GENERATOR = (width, height, factory) -> {
-        Data data = new Data(width, height, new byte[width * height], new byte[width * height]);
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                data.tiles[x * y] = Tile.GRASS.id();
-            }
-        }
-        return data;
+        byte[] tiles = new byte[width * height];
+        Arrays.fill(tiles, Tile.GRASS.id());
+        return new Data(width, height, tiles, new byte[width * height]);
     };
     Factory DEFAULT_FACTORY = (name, input) ->
-        new Default("r00m", input, 24, 24, DEFAULT_GENERATOR, EntityFactory.DEFAULT);
+        new Default(name, input, SIDE, SIDE, DEFAULT_GENERATOR, EntityFactory.DEFAULT);
 
     Human player();
 
@@ -68,20 +72,18 @@ public interface Room {
     final class Buffer {
         final byte[] tiles;
         final byte[] datas;
-        final Set<Entity>[] entitiesInTiles;
+        final List<Set<Entity>> entitiesInTiles;
 
         Buffer(int width, int height, byte[] tiles, byte[] data) {
-            this.tiles = new byte[tiles.length];
-            System.arraycopy(tiles, 0, this.tiles, 0, tiles.length);
-            this.datas = new byte[data.length];
-            System.arraycopy(data, 0, this.datas, 0, data.length);
+            this.tiles = tiles.clone();
+            this.datas = data.clone();
             this.entitiesInTiles = createEntities(width, height);
         }
 
-        private static Set<Entity>[] createEntities(int width, int height) {
-            Set<Entity>[] result = new Set[width * height];
+        private static List<Set<Entity>> createEntities(int width, int height) {
+            List<Set<Entity>> result = new ArrayList<>(width * height);
             for (int i = 0; i < width * height; i++) {
-                result[i] = new HashSet<>();
+                result.add(new HashSet<>());
             }
             return result;
         }
@@ -89,8 +91,8 @@ public interface Room {
         void copy(Buffer buffer) {
             System.arraycopy(buffer.tiles, 0, this.tiles, 0, tiles.length);
             System.arraycopy(buffer.datas, 0, this.datas, 0, datas.length);
-            for (int i = 0; i < buffer.entitiesInTiles.length; i++) {
-                this.entitiesInTiles[i] = new HashSet<>(buffer.entitiesInTiles[i]);
+            for (int i = 0; i < buffer.entitiesInTiles.size(); i++) {
+                this.entitiesInTiles.set(i, new HashSet<>(buffer.entitiesInTiles.get(i)));
             }
         }
     }
@@ -98,8 +100,25 @@ public interface Room {
     record Meta(int xo, int yo, int ho, int wo) {
     }
 
+    /**
+     * Сгенерированная карта. Массивы копируются на входе и на выходе — record
+     * обещает неизменяемость, и без копий это обещание было бы ложным.
+     */
     record Data(int width, int height, byte[] tiles, byte[] data) {
+        public Data {
+            tiles = tiles.clone();
+            data = data.clone();
+        }
 
+        @Override
+        public byte[] tiles() {
+            return tiles.clone();
+        }
+
+        @Override
+        public byte[] data() {
+            return data.clone();
+        }
     }
 
 }

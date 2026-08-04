@@ -4,6 +4,10 @@ import com.google.common.io.LineProcessor;
 
 import java.io.IOException;
 
+/**
+ * Поле, по которому ходит муравей. Карта тороидальная: уход за край возвращает
+ * на противоположную сторону, поэтому стен нет вовсе.
+ */
 public sealed interface Grid {
 
     static Grid toroid(int width, int height) {
@@ -85,19 +89,20 @@ public sealed interface Grid {
 
         @Override
         public Mutable copy() {
-            ToroidGrid n = new ToroidGrid(width, height);
-            for (int x = 0; x < height; x++) {
-                System.arraycopy(map[x], 0, n.map[x], 0, width);
+            ToroidGrid copy = new ToroidGrid(width, height);
+            for (int x = 0; x < width; x++) {
+                System.arraycopy(map[x], 0, copy.map[x], 0, height);
             }
-            return n;
+            copy.foods = foods;
+            return copy;
         }
 
         @Override
         public Place nextPlace(int x, int y, Direction direction) {
             switch (direction) {
                 case UP: {
-                    y--;
-                    if (y <= 0) {
+                    --y;
+                    if (y < 0) {
                         y = height - 1;
                     }
                     break;

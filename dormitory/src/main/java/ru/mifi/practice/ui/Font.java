@@ -1,7 +1,13 @@
 package ru.mifi.practice.ui;
 
 import java.awt.Point;
+import java.util.Locale;
 
+/**
+ * Растровый шрифт: символ ищется в строке {@code CHARS}, а его позиция задаёт тайл
+ * на листе спрайтов. Регистр приводится с явной локалью — в турецкой букву «i»
+ * иначе не узнать.
+ */
 public interface Font {
 
     Point draw(String msg, int x, int y, int w, int h, int col);
@@ -53,9 +59,9 @@ public interface Font {
 
         @Override
         public void draw(String msg, int x, int y, int col) {
-            msg = msg.toUpperCase();
-            for (int i = 0; i < msg.length(); i++) {
-                int ix = CHARS.indexOf(msg.charAt(i));
+            String upper = msg.toUpperCase(Locale.ROOT);
+            for (int i = 0; i < upper.length(); i++) {
+                int ix = CHARS.indexOf(upper.charAt(i));
                 if (ix >= 0) {
                     int tile = ix + 29 * 32;
                     screen.render(x + i * 8, y, tile, col, 0);

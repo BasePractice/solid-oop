@@ -1,24 +1,16 @@
 package ru.mifi.practice.val3.bank;
 
+/**
+ * Держатель карт. Реализация — record, поэтому {@code equals} и {@code hashCode}
+ * сравнивают по ФИО, а не по ссылке: без этого банк не заметил бы повторную
+ * регистрацию одного и того же человека.
+ */
 public sealed interface Holder extends Index.Get {
 
-    final class Default implements Holder {
-        private final String firstName;
-        private final String lastName;
-        private final String middleName;
-        private final Index searchIndex;
-
-        public Default(String firstName, String lastName, String middleName) {
-            this.firstName = firstName;
-            this.lastName = lastName;
-            this.middleName = middleName;
-            this.searchIndex = Index.createSearch(firstName, lastName, middleName);
-        }
-
-
+    record Default(String firstName, String lastName, String middleName) implements Holder {
         @Override
         public Index index() {
-            return searchIndex;
+            return Index.createSearch(firstName, lastName, middleName);
         }
 
         @Override

@@ -1,5 +1,11 @@
 package ru.mifi.practice.val3.bank;
 
+import java.util.Objects;
+
+/**
+ * Карта держателя. Кредитная отличается от дебетовой только тем, сколько можно
+ * увести баланс в минус, поэтому проверка средств живёт в {@code has}, а не в вызывающем коде.
+ */
 public sealed interface Card {
 
     Holder holder();
@@ -15,16 +21,14 @@ public sealed interface Card {
     }
 
     final class Cred implements Card, Mutant {
-        private final Bank bank;
         private final Holder holder;
         private final String number;
         private final float limit;
         private final Amount amount;
 
         Cred(Bank bank, Holder holder, String number, Currency currency, float limit) {
-            this.bank = bank;
-            this.holder = holder;
-            this.number = number;
+            this.holder = Objects.requireNonNull(holder, "Card cannot exist without holder");
+            this.number = Objects.requireNonNull(number, "Card cannot exist without number");
             this.limit = limit;
             this.amount = Amount.create(currency, 0, bank);
         }
@@ -51,24 +55,18 @@ public sealed interface Card {
 
         @Override
         public void updateAmount(Amount amount) {
-            if (amount.value() >= 0) {
-                this.amount.plus(amount);
-            } else {
-                this.amount.minus(amount);
-            }
+            this.amount.plus(amount);
         }
     }
 
     final class Debt implements Card, Mutant {
-        private final Bank bank;
         private final Holder holder;
         private final String number;
         private final Amount amount;
 
         Debt(Bank bank, Holder holder, String number, Currency currency) {
-            this.bank = bank;
-            this.holder = holder;
-            this.number = number;
+            this.holder = Objects.requireNonNull(holder, "Card cannot exist without holder");
+            this.number = Objects.requireNonNull(number, "Card cannot exist without number");
             this.amount = Amount.create(currency, 0, bank);
         }
 
@@ -94,11 +92,7 @@ public sealed interface Card {
 
         @Override
         public void updateAmount(Amount amount) {
-            if (amount.value() >= 0) {
-                this.amount.plus(amount);
-            } else {
-                this.amount.minus(amount);
-            }
+            this.amount.plus(amount);
         }
     }
 }

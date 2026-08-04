@@ -2,8 +2,15 @@ package ru.mifi.practice.vol6.transport;
 
 import java.io.PrintStream;
 
+/**
+ * Приёмник вывода. Обычный и ошибочный потоки разделены, чтобы сообщения об ошибках
+ * не смешивались с меню.
+ */
 public interface Output {
-    Output DEFAULT = new Standard();
+
+    static Output standard() {
+        return new Standard();
+    }
 
     void print(String format, Object... args);
 

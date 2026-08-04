@@ -12,26 +12,33 @@ import ru.mifi.practice.vol6.security.Authentication;
 import ru.mifi.practice.vol6.security.Security;
 import ru.mifi.practice.vol6.storege.Storage;
 
-public abstract class Main {
+import java.nio.file.Path;
+
+/**
+ * Сборка приложения: здесь и только здесь известно, что хранилище файловое, а ввод
+ * консольный. Меню, репозиторий и аутентификация про это не знают.
+ */
+public final class Main {
+    private static final String USERS = "users.json";
+
+    private Main() {
+    }
+
     public static void main(String[] args) throws Exception {
         Menu root = Menu.root();
-        Storage storage = Storage.file();
-        Runnable onExit = prepare(root, storage);
-        try (Context context = Menu.defaultContext(onExit)) {
+        Storage storage = Storage.file(Path.of(args.length > 0 ? args[0] : USERS));
+        RepositoryMutant<User, String> repository = storage.read(new UserRepositoryInMemory());
+        prepare(root, repository);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> storage.write(repository)));
+        try (Context context = Menu.defaultContext()) {
             root.select(context);
         }
     }
 
-    private static Runnable prepare(Menu root, Storage storage) {
-        RepositoryMutant<User, String> repository = storage.read(new UserRepositoryInMemory());
+    private static void prepare(Menu root, RepositoryMutant<User, String> repository) {
         Security.Hash hash = Security.createHash();
-        Authentication authentication = Authentication.create(repository, hash);
-        new AuthenticationMenu(authentication).register(root);
+        new AuthenticationMenu(Authentication.create(repository, hash)).register(root);
         new RegistrationMenu(repository, hash).register(root);
         new DeleteRegistrationMenu(repository).register(root);
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            storage.write(repository);
-        }));
-        return () -> storage.write(repository);
     }
 }

@@ -8,7 +8,6 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
-@SuppressWarnings("PMD.SingularField")
 public final class VersionModel {
     @NotBlank
     @JsonProperty("version")

@@ -1,7 +1,12 @@
 package ru.mifi.practice.val3.bank;
 
+import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * Составной ключ поиска. Сравнение и хеш считаются по содержимому — иначе два
+ * одинаковых набора значений оказались бы разными ключами в {@code HashMap}.
+ */
 public interface Index {
 
     static Index createSearch(Object... values) {
@@ -21,7 +26,7 @@ public interface Index {
 
         @Override
         public int hashCode() {
-            return Objects.hash(values);
+            return Arrays.deepHashCode(values);
         }
 
         @Override

@@ -13,10 +13,18 @@ import java.awt.Graphics;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Objects;
 
+/**
+ * Окно и игровой цикл: тики идут с фиксированной частотой, кадры рисуются по мере
+ * готовности. Ресурсы читаются один раз и разделяются между экранами — картинка
+ * одна и та же, незачем держать её в памяти дважды.
+ */
 public interface Model {
     String NAME = "Room";
+    String ICONS = "/icons.png";
 
     static Model start(boolean development) {
         return new Default(development).start();
@@ -131,14 +139,13 @@ public interface Model {
             for (int r = 0; r < 6; r++) {
                 for (int g = 0; g < 6; g++) {
                     for (int b = 0; b < 6; b++) {
-                        int rr = (r * 255 / 5);
-                        int gg = (g * 255 / 5);
-                        int bb = (b * 255 / 5);
+                        int rr = r * 255 / 5;
+                        int gg = g * 255 / 5;
+                        int bb = b * 255 / 5;
                         int mid = (rr * 30 + gg * 59 + bb * 11) / 100;
-
-                        int r1 = ((rr + mid * 1) / 2) * 230 / 255 + 10;
-                        int g1 = ((gg + mid * 1) / 2) * 230 / 255 + 10;
-                        int b1 = ((bb + mid * 1) / 2) * 230 / 255 + 10;
+                        int r1 = (rr + mid) / 2 * 230 / 255 + 10;
+                        int g1 = (gg + mid) / 2 * 230 / 255 + 10;
+                        int b1 = (bb + mid) / 2 * 230 / 255 + 10;
                         colors[pp++] = r1 << 16 | g1 << 8 | b1;
                     }
                 }
@@ -331,22 +338,22 @@ public interface Model {
             if (player != null) {
                 for (int i = 0; i < 10; i++) {
                     if (i < player.health()) {
-                        screen.render(i * 8, screen.height() - 16, 0 + 12 * 32, Color.get(000, 200, 500, 533), 0);
+                        screen.render(i * 8, screen.height() - 16, 0 + 12 * 32, Color.get(0, 200, 500, 533), 0);
                     } else {
-                        screen.render(i * 8, screen.height() - 16, 0 + 12 * 32, Color.get(000, 100, 000, 000), 0);
+                        screen.render(i * 8, screen.height() - 16, 0 + 12 * 32, Color.get(0, 100, 0, 0), 0);
                     }
 
                     if (player.staminaRechargeDelay() > 0) {
                         if (player.staminaRechargeDelay() / 4 % 2 == 0) {
-                            screen.render(i * 8, screen.height() - 8, 1 + 12 * 32, Color.get(000, 555, 000, 000), 0);
+                            screen.render(i * 8, screen.height() - 8, 1 + 12 * 32, Color.get(0, 555, 0, 0), 0);
                         } else {
-                            screen.render(i * 8, screen.height() - 8, 1 + 12 * 32, Color.get(000, 110, 000, 000), 0);
+                            screen.render(i * 8, screen.height() - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
                         }
                     } else {
                         if (i < player.stamina()) {
-                            screen.render(i * 8, screen.height() - 8, 1 + 12 * 32, Color.get(000, 220, 550, 553), 0);
+                            screen.render(i * 8, screen.height() - 8, 1 + 12 * 32, Color.get(0, 220, 550, 553), 0);
                         } else {
-                            screen.render(i * 8, screen.height() - 8, 1 + 12 * 32, Color.get(000, 110, 000, 000), 0);
+                            screen.render(i * 8, screen.height() - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
                         }
                     }
                 }
@@ -385,26 +392,26 @@ public interface Model {
         }
 
         private void selfUpdate() {
-            int xWidth = width() * scale();
-            int xHeight = height() * scale();
-
-            Dimension size = new Dimension(xWidth, xHeight);
+            Dimension size = new Dimension(width() * scale(), height() * scale());
             setMinimumSize(size);
             setMaximumSize(size);
             setPreferredSize(size);
-
             image = new BufferedImage(width(), height(), BufferedImage.TYPE_INT_RGB);
             pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
-            try {
-                screen = new Screen.Default(width(), height(),
-                    new SpriteSheet(ImageIO.read(Objects.requireNonNull(Model.class.getResourceAsStream("/icons.png")))));
-                lightScreen = new Screen.Default(width(), height(),
-                    new SpriteSheet(ImageIO.read(Objects.requireNonNull(Model.class.getResourceAsStream("/icons.png")))));
-                font = new Font.Default(screen);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+            SpriteSheet sheet = sheet(ICONS);
+            screen = new Screen.Default(width(), height(), sheet);
+            lightScreen = new Screen.Default(width(), height(), sheet);
+            font = new Font.Default(screen);
             distance = Math.max(screen.width() / 2, (screen.height() - 8) / 2);
+        }
+
+        private static SpriteSheet sheet(String name) {
+            try (InputStream stream = Model.class.getResourceAsStream(name)) {
+                return new SpriteSheet(ImageIO.read(
+                    Objects.requireNonNull(stream, "Sprite sheet " + name + " is missing from resources")));
+            } catch (IOException e) {
+                throw new IllegalStateException("Cannot read sprite sheet " + name, e);
+            }
         }
     }
 }

@@ -49,13 +49,19 @@ public final class User {
         }
     }
 
+    @Override
+    public String toString() {
+        return name + "/" + password;
+    }
+
     public static void main(String[] args) {
-        User user = User.builder()
+        User first = User.builder()
             .withName("Name1")
             .withPassword("Password1")
             .build();
-        user = user.toBuilder()
+        User second = first.toBuilder()
             .withName("Name2")
             .build();
+        System.out.printf("%s -> %s%n", first, second);
     }
 }

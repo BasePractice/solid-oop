@@ -5,19 +5,31 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
+/**
+ * Популяция, живущая по месяцам. Время двигают только пары и одиночки — каждый
+ * ровно один раз за такт, поэтому свободные люди и люди в паре стареют одинаково.
+ *
+ * <p>Источник случайности один и передаётся внутрь: с фиксированным зерном прогон
+ * повторяется, а значит его можно проверить тестом.
+ */
 public final class Earth {
-    private final Random random = new Random();
+    private static final int YEARS = 2500;
+    private static final int MONTHS = 12;
+    private final Random random;
 
-    public static void main(String[] args) {
-        new Earth().start();
+    public Earth(Random random) {
+        this.random = random;
     }
 
-    private void start() {
-        random.setSeed(System.currentTimeMillis());
+    public static void main(String[] args) {
+        new Earth(new Random()).start();
+    }
+
+    public void start() {
         List<Relation> relations = new ArrayList<>();
         int generation = 0;
         do {
-            circle(2500, relations);
+            circle(YEARS, relations);
             ++generation;
         } while (relations.isEmpty());
         System.out.println("Generation: " + generation);
@@ -27,57 +39,37 @@ public final class Earth {
     }
 
     private void circle(int years, List<Relation> relations) {
-        Human.Women women = Human.women();
-        Human.Men men = Human.men();
         List<Human> humans = new ArrayList<>();
-        humans.add(women);
-        humans.add(men);
-        Relation.of(women, men, humans).ifPresent(relations::add);
-        int tick = 0;
-        while (tick < years * 12) {
+        Relation.of(Human.women(random), Human.men(random), humans).ifPresent(relations::add);
+        for (int tick = 0; tick < years * MONTHS; tick++) {
             humans.forEach(Human::tick);
             relations.forEach(Relation::tick);
-            deleteDied(relations, humans);
-            deleteDied(humans);
+            relations.removeIf(relation -> forget(relation, humans));
+            humans.removeIf(Human::isDied);
             createRelation(relations, humans);
-            ++tick;
         }
     }
 
     private void createRelation(List<Relation> relations, List<Human> humans) {
-        if (humans.size() >= 3) {
-            int n = random.nextInt(0, humans.size());
-            Human h1 = humans.remove(n);
-            n = random.nextInt(0, humans.size());
-            Human h2 = humans.remove(n);
-            Optional<Relation> relation = Relation.of(h1, h2, humans);
-            relation.ifPresent(relations::add);
-            if (relation.isEmpty()) {
-                humans.add(h1);
-                humans.add(h2);
-            }
+        if (humans.size() < 3) {
+            return;
+        }
+        Human first = humans.remove(random.nextInt(humans.size()));
+        Human second = humans.remove(random.nextInt(humans.size()));
+        Optional<Relation> relation = Relation.of(first, second, humans);
+        relation.ifPresent(relations::add);
+        if (relation.isEmpty()) {
+            humans.add(first);
+            humans.add(second);
         }
     }
 
-    @SuppressWarnings("PMD.ForLoopCanBeForeach")
-    private static void deleteDied(List<Relation> relations, List<Human> humans) {
-        for (int i = 0; i < relations.size(); i++) {
-            Relation relation = relations.get(i);
-            if (relation.isDied()) {
-                relations.remove(relation);
-                humans.remove(relation.father);
-                humans.remove(relation.mother);
-            }
+    private static boolean forget(Relation relation, List<Human> humans) {
+        if (!relation.isDied()) {
+            return false;
         }
-    }
-
-    @SuppressWarnings("PMD.ForLoopCanBeForeach")
-    private static void deleteDied(List<Human> humans) {
-        for (int i = 0; i < humans.size(); i++) {
-            Human human = humans.get(i);
-            if (human.isDied()) {
-                humans.remove(human);
-            }
-        }
+        humans.remove(relation.father);
+        humans.remove(relation.mother);
+        return true;
     }
 }

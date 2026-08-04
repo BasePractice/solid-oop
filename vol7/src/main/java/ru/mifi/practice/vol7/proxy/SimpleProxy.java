@@ -1,20 +1,26 @@
 package ru.mifi.practice.vol7.proxy;
 
-import java.lang.reflect.Proxy;
+import java.util.Objects;
 
-public final class SimpleProxy {
+/**
+ * Статический заместитель: реализует тот же интерфейс, что и оригинал, одну операцию
+ * подменяет своей, остальные передаёт дальше. Клиент отличить подмену не может —
+ * в этом и смысл паттерна.
+ */
+public final class SimpleProxy implements Simple {
+    private final Simple origin;
 
-    private int doSomething2() {
+    public SimpleProxy(Simple origin) {
+        this.origin = Objects.requireNonNull(origin, "Proxy cannot stand for nothing");
+    }
+
+    @Override
+    public int doSomething() {
         return 1;
     }
 
-    public Simple createProxy(Simple simple) {
-        return (Simple) Proxy.newProxyInstance(SimpleProxy.class.getClassLoader(),
-            new Class[]{Simple.class}, (proxy, method, args) -> {
-                if ("doSomething".equals(method.getName())) {
-                    return doSomething2();
-                }
-                return method.invoke(simple, args);
-            });
+    @Override
+    public int doSomethingElse() {
+        return origin.doSomethingElse();
     }
 }

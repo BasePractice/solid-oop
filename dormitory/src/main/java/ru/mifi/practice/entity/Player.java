@@ -9,7 +9,6 @@ import java.util.Set;
 
 import static ru.mifi.practice.ui.Color.get;
 
-@SuppressWarnings({"PMD.EmptyControlStatement", "PMD.UnusedPrivateMethod"})
 final class Player extends AbstractDynamicEntity implements Human {
     private static final int MAX_STAMINA = 10;
     private final Handler input;
@@ -79,11 +78,6 @@ final class Player extends AbstractDynamicEntity implements Human {
                 move2(room, 0, 1);
                 yKnockBack--;
             }
-
-            if (hurtTime > 0) {
-                //Ignore
-            }
-
             if (xa != 0 || ya != 0) {
                 walkDist++;
                 if (xa < 0) {
@@ -235,23 +229,18 @@ final class Player extends AbstractDynamicEntity implements Human {
             x += xa;
             y += ya;
             state = State.WALK;
-            //if (xa > 0 || ya > 0) {
-            //    stamina--;
-            //    staminaRecharge = 0;
-            //}
         } else {
             state = State.STAY;
         }
 
-        if (input.isAttacked()) {
-            if (stamina == 0) {
-                //Ignore
-            } else {
-                stamina--;
-                staminaRecharge = 0;
-                attack();
-                state = State.ATCK;
-            }
+        if (input.isAttacked() && stamina > 0) {
+            stamina--;
+            staminaRecharge = 0;
+            attack();
+            state = State.ATCK;
+        }
+        if (input.isUsed()) {
+            use();
         }
         if (attackTime > 0) {
             attackTime--;

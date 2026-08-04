@@ -9,39 +9,47 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ServiceLoader;
 
+/**
+ * Прогоняет по карте всех муравьёв, найденных через {@link ServiceLoader}. Сам движок
+ * не знает ни одной реализации: стратегии подключаются модулями, а сравниваются
+ * по числу шагов и по остатку еды.
+ */
 public final class Engine {
+    private static final String MAP = "/basic.txt";
+    private static final int LIMIT = 500;
     private final List<Ant> ants = new ArrayList<>();
 
     public Engine() {
-        ServiceLoader<Ant> loader = ServiceLoader.load(Ant.class);
-        loader.forEach(ants::add);
+        ServiceLoader.load(Ant.class).forEach(ants::add);
     }
 
     private static Grid.Place searchAnt(Grid grid) {
-        for (int i = 0; i < grid.getWidth(); i++) {
-            for (int j = 0; j < grid.getHeight(); j++) {
-                Grid.Place place = grid.at(i, j);
+        for (int x = 0; x < grid.getWidth(); x++) {
+            for (int y = 0; y < grid.getHeight(); y++) {
+                Grid.Place place = grid.at(x, y);
                 if (place.element() == Grid.Element.ANT) {
                     return place;
                 }
             }
         }
-        throw new IllegalStateException("No such ant");
+        throw new IllegalStateException("Map has no ant on it");
     }
 
     public void all() throws IOException {
-        URL resource = Resources.getResource(Engine.class, "/basic.txt");
+        all(MAP, LIMIT);
+    }
+
+    public void all(String map, int limit) throws IOException {
+        URL resource = Resources.getResource(Engine.class, map);
         Grid grid = Resources.readLines(resource, StandardCharsets.UTF_8, Grid.toroidProcessor());
         Grid.Place place = searchAnt(grid);
-
         for (Ant ant : ants) {
             State state = new State.Default(grid, place.x(), place.y());
-            while (state.next(ant) && state.foods() > 0) {
-                if (state.steps() > 500) {
-                    break;
-                }
+            boolean walking = true;
+            while (walking && state.steps() < limit && state.foods() > 0) {
+                walking = state.next(ant);
             }
-            System.out.printf("%s: %d/%d%n", ant.getName(), state.steps(), state.foods());
+            System.out.printf("%s: шагов %d, осталось еды %d%n", ant.getName(), state.steps(), state.foods());
         }
     }
 }

@@ -4,26 +4,25 @@ import ru.mifi.practice.vol6.security.Authentication;
 import ru.mifi.practice.vol6.transport.Input;
 import ru.mifi.practice.vol6.transport.Output;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Сеанс работы с пользователем: ввод, вывод и текущая сессия. Меню обращается только
+ * сюда и не знает, что за консолью стоит {@code System.in}.
+ */
 public final class Context implements Output, Input {
     private final Output output;
     private final Input input;
-    private final AtomicReference<Authentication.Session> session;
-    private final Runnable onExit;
+    private final AtomicReference<Authentication.Session> session = new AtomicReference<>();
+    private final AtomicBoolean running = new AtomicBoolean(true);
 
-    public Context(Output output, Input input, Runnable onExit) {
-        this.output = output;
-        this.input = input;
-        this.session = new AtomicReference<>();
-        this.onExit = onExit;
+    public Context(Output output, Input input) {
+        this.output = Objects.requireNonNull(output, "Context cannot work without output");
+        this.input = Objects.requireNonNull(input, "Context cannot work without input");
     }
-
-    public Context(Runnable onExit) {
-        this(Output.DEFAULT, Input.DEFAULT, onExit);
-    }
-
 
     @Override
     public void close() throws Exception {
@@ -46,12 +45,9 @@ public final class Context implements Output, Input {
     }
 
     public void print() {
-        String authenticated = "не авторизован";
-        Authentication.Session session = this.session.get();
-        if (session != null) {
-            authenticated = session.user().username();
-        }
-        output.println("Auth: %s", authenticated);
+        output.println("Auth: %s", authorized()
+            .map(current -> current.user().username())
+            .orElse("не авторизован"));
     }
 
     @Override
@@ -66,20 +62,22 @@ public final class Context implements Output, Input {
     }
 
     public void putSession(Authentication.Session session) {
-        this.session.compareAndExchange(null, session);
+        this.session.set(Objects.requireNonNull(session, "Session cannot be null"));
     }
 
     public void clearSession() {
-        session.setRelease(null);
+        session.set(null);
     }
 
     public Optional<Authentication.Session> authorized() {
         return Optional.ofNullable(session.get());
     }
 
-    public void exit() {
-        if (onExit != null) {
-            onExit.run();
-        }
+    public boolean running() {
+        return running.get();
+    }
+
+    public void stop() {
+        running.set(false);
     }
 }

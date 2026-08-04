@@ -4,10 +4,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+/**
+ * Банк держит своих клиентов и их карты и умеет конвертировать суммы, обращаясь
+ * за курсом к вышестоящему банку. Регистрация в {@link Up} вынесена наружу
+ * конструктора: пока объект не достроен, показывать его никому нельзя.
+ */
 public sealed interface Bank extends Currency.Converter {
-    Up CENTROBANK = new Up();
-    Bank SBER = new Sber(CENTROBANK);
 
     Holder createHolder(String firstName, String lastName, String middleName);
 
@@ -18,12 +22,12 @@ public sealed interface Bank extends Currency.Converter {
     final class Up implements Currency.Converter {
         private final Map<String, Bank> banks = new HashMap<>();
 
-        private Up() {
-
-        }
-
         public List<Bank> banks() {
             return new ArrayList<>(banks.values());
+        }
+
+        public void register(Bank bank) {
+            banks.put(bank.getName(), bank);
         }
 
         @Override
@@ -31,7 +35,8 @@ public sealed interface Bank extends Currency.Converter {
             if (amount.currency().equals(to)) {
                 return Amount.create(to, amount.value(), this);
             }
-            throw new IllegalArgumentException("Not implement yet");
+            throw new IllegalArgumentException(
+                "Conversion from " + amount.currency().getName() + " to " + to.getName() + " is not implemented");
         }
     }
 
@@ -40,28 +45,26 @@ public sealed interface Bank extends Currency.Converter {
         private final Map<Holder, List<Card>> cards = new HashMap<>();
         private final Up up;
 
-        Sber(Up up) {
-            this.up = up;
-            up.banks.put(getName(), this);
+        public Sber(Up up) {
+            this.up = Objects.requireNonNull(up, "Bank cannot work without upstream");
         }
 
         @Override
         public Holder createHolder(String firstName, String lastName, String middleName) {
             Holder holder = new Holder.Default(firstName, lastName, middleName);
-            Index index = holder.index();
-            List<Holder> list = holders.computeIfAbsent(index, k -> new ArrayList<>());
-            if (list.contains(holder)) {
-                throw new IllegalStateException("Holder already exists");
+            List<Holder> found = holders.computeIfAbsent(holder.index(), key -> new ArrayList<>());
+            if (found.contains(holder)) {
+                throw new IllegalStateException("Holder " + holder + " already exists in " + getName());
             }
-            list.add(holder);
+            found.add(holder);
             cards.put(holder, new ArrayList<>());
             return holder;
         }
 
         @Override
         public List<Holder> search(String firstName, String lastName, String middleName) {
-            Index index = Index.createSearch(firstName, lastName, middleName);
-            return holders.getOrDefault(index, List.of());
+            return List.copyOf(holders.getOrDefault(
+                Index.createSearch(firstName, lastName, middleName), List.of()));
         }
 
         @Override

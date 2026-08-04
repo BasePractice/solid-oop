@@ -8,6 +8,10 @@ import ru.mifi.practice.val3.cont.Weather;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Погода из open-meteo. Ответ без блока {@code current} считается отсутствием данных,
+ * а не поводом упасть с NPE где-то дальше по стеку.
+ */
 public final class OpenMeteo implements Weather {
     private static final String URL = "https://api.open-meteo.com/v1/forecast";
     private final Http http;
@@ -24,18 +28,17 @@ public final class OpenMeteo implements Weather {
             .addQueryParameter("longitude", String.valueOf(longitude))
             .addQueryParameter("current", "temperature_2m,wind_speed_10m")
             .build();
-        return http.get(url.toString(), Result.class).map(result -> new Details(
-            Float.parseFloat(result.current.temperature),
-            Float.parseFloat(result.current.windSpeed)
-        ));
+        return http.get(url.toString(), Result.class)
+            .map(Result::current)
+            .map(current -> new Details(current.temperature(), current.windSpeed()));
     }
 
     private record Result(@SerializedName("current") Current current) {
 
     }
 
-    private record Current(@SerializedName("temperature_2m") String temperature,
-                           @SerializedName("wind_speed_10m") String windSpeed) {
+    private record Current(@SerializedName("temperature_2m") float temperature,
+                           @SerializedName("wind_speed_10m") float windSpeed) {
 
     }
 }

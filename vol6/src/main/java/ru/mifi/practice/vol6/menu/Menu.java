@@ -1,12 +1,18 @@
 package ru.mifi.practice.vol6.menu;
 
+import ru.mifi.practice.vol6.transport.Input;
 import ru.mifi.practice.vol6.transport.Output;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
-@SuppressWarnings("PMD.UnusedPrivateMethod")
+/**
+ * Узел дерева меню. Лист выполняет действие, ветка показывает список потомков.
+ * Выход не убивает процесс, а гасит флаг в контексте — тогда вложенные циклы
+ * разворачиваются сами и ресурсы закрываются штатно.
+ */
 public final class Menu {
     private final String text;
     private final Menu parent;
@@ -32,12 +38,12 @@ public final class Menu {
         return new Menu(null, null);
     }
 
-    private static void printLine(Output output) {
-        output.println("---------------------");
+    public static Context defaultContext() {
+        return new Context(Output.standard(), Input.standard());
     }
 
-    public static Context defaultContext(Runnable onExit) {
-        return new Context(onExit);
+    private static void printLine(Context context) {
+        context.println("---------------------");
     }
 
     public Menu addSub(String text, Consumer<Context> action) {
@@ -50,49 +56,66 @@ public final class Menu {
     }
 
     public void select(Context context) {
-        if (action != null) {
-            action.accept(context);
-        } else {
+        if (action == null) {
             selectedSubMenu(context);
+        } else {
+            action.accept(context);
         }
     }
 
     private void selectedSubMenu(Context context) {
         boolean select = true;
-        while (select) {
-            printLine(context);
-            context.print();
-            printLine(context);
-            for (int i = 0; i < subMenus.size(); i++) {
-                Menu sub = subMenus.get(i);
-                context.println("%4d: %s", i + 1, sub.text);
-            }
-            context.println("exit: Выход");
-            if (parent != null) {
-                context.println("up  : Наверх");
-            }
-            printLine(context);
-            context.print("> ");
-            String in = context.inputString();
-            if ("exit".equals(in)) {
-                context.exit();
-                System.exit(0);
+        while (select && context.running()) {
+            print(context);
+            String in = read(context);
+            if (in == null || "exit".equals(in)) {
+                context.stop();
+                select = false;
             } else if (parent != null && "up".equals(in)) {
                 select = false;
-                parent.select(context);
             } else {
-                try {
-                    int index = Integer.parseInt(in) - 1;
-                    if (index >= 0 && index < subMenus.size()) {
-                        subMenus.get(index).select(context);
-                    } else {
-                        context.errorln("Не верный номер. %s", in);
-                    }
-                } catch (Exception ex) {
-                    context.errorln("Ошибка ввода. %s", in);
-                }
+                choose(context, in);
             }
         }
     }
 
+    private void print(Context context) {
+        printLine(context);
+        context.print();
+        printLine(context);
+        for (int i = 0; i < subMenus.size(); i++) {
+            context.println("%4d: %s", i + 1, subMenus.get(i).text);
+        }
+        context.println("exit: Выход");
+        if (parent != null) {
+            context.println("up  : Наверх");
+        }
+        printLine(context);
+        context.print("> ");
+    }
+
+    private String read(Context context) {
+        try {
+            return context.inputString();
+        } catch (NoSuchElementException ex) {
+            return null;
+        }
+    }
+
+    private void choose(Context context, String in) {
+        int index = index(in);
+        if (index < 0 || index >= subMenus.size()) {
+            context.errorln("Не верный номер: %s", in);
+        } else {
+            subMenus.get(index).select(context);
+        }
+    }
+
+    private int index(String in) {
+        try {
+            return Integer.parseInt(in.trim()) - 1;
+        } catch (NumberFormatException ex) {
+            return -1;
+        }
+    }
 }
